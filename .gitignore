@@ -31,6 +31,10 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Rust
+target/
+Cargo.lock
+
 # ACLI generated
 .cli/
 
