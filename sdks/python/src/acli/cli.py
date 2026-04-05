@@ -135,51 +135,16 @@ def init(
     src_dir = target / "src" / name
     src_dir.mkdir(parents=True)
 
+    replacements = {"{{name}}": name, "{{version}}": ver}
+
     # pyproject.toml
-    (target / "pyproject.toml").write_text(
-        f'[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"\n\n'
-        f"[project]\n"
-        f'name = "{name}"\n'
-        f'version = "{ver}"\n'
-        f'description = "An ACLI-compliant CLI tool"\n'
-        f'requires-python = ">=3.10"\n'
-        f'dependencies = ["acli-spec"]\n\n'
-        f"[tool.hatch.build.targets.wheel]\n"
-        f'packages = ["src/{name}"]\n'
-    )
+    (target / "pyproject.toml").write_text(_render_template("pyproject.toml.tpl", replacements))
 
     # __init__.py
     (src_dir / "__init__.py").write_text("")
 
     # main.py
-    (src_dir / "main.py").write_text(
-        f'"""Entry point for {name}."""\n\n'
-        f"from pathlib import Path\n\n"
-        f"import typer\n\n"
-        f"from acli import ACLIApp, OutputFormat, acli_command, emit, success_envelope\n\n"
-        f'app = ACLIApp(name="{name}", version="{ver}")\n\n\n'
-        f"@app.command()\n"
-        f"@acli_command(\n"
-        f"    examples=[\n"
-        f'        ("Run hello", "{name} hello --name world"),\n'
-        f'        ("Run hello formally", "{name} hello --name world --formal"),\n'
-        f"    ],\n"
-        f"    idempotent=True,\n"
-        f")\n"
-        f"def hello(\n"
-        f'    name: str = typer.Option(..., help="Who to greet. type:string"),\n'
-        f'    formal: bool = typer.Option(False, help="Use formal greeting. type:bool"),\n'
-        f"    output: OutputFormat = typer.Option(OutputFormat.text),\n"
-        f") -> None:\n"
-        f'    """Greet someone."""\n'
-        f'    greeting = f"Good day, {{name}}." if formal else f"Hello, {{name}}!"\n'
-        f'    data = {{"greeting": greeting}}\n'
-        f'    emit(success_envelope("hello", data, version="{ver}"), output)\n\n\n'
-        f"def main() -> None:\n"
-        f"    app.run()\n\n\n"
-        f'if __name__ == "__main__":\n'
-        f"    main()\n"
-    )
+    (src_dir / "main.py").write_text(_render_template("main.py.tpl", replacements))
 
     created = ["pyproject.toml", f"src/{name}/__init__.py", f"src/{name}/main.py"]
 
@@ -193,6 +158,15 @@ def init(
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+def _render_template(template_name: str, replacements: dict[str, str]) -> str:
+    """Render a template file from acli/templates/ with replacements."""
+    template_dir = Path(__file__).parent / "templates"
+    content = (template_dir / template_name).read_text()
+    for key, value in replacements.items():
+        content = content.replace(key, value)
+    return content
 
 
 def _load_tree(bin_name: str) -> dict[str, Any]:
@@ -296,6 +270,42 @@ def _validate_tree(tree: dict[str, Any]) -> list[dict[str, Any]]:
                 }
             )
 
+        # §2.1 — --output flag exists
+        option_names = [o.get("name", "") for o in cmd.get("options", [])]
+        has_output = "output" in option_names
+        results.append(
+            {
+                "check": f"{cmd_name}: --output flag exists",
+                "spec": "§2.1",
+                "level": "MUST",
+                "pass": has_output,
+            }
+        )
+
+        # §5 — --dry-run on non-idempotent commands
+        is_idempotent = cmd.get("idempotent")
+        if is_idempotent is False:
+            has_dry_run = "dry_run" in option_names or "dry-run" in option_names
+            results.append(
+                {
+                    "check": f"{cmd_name}: --dry-run on state-modifying command",
+                    "spec": "§5",
+                    "level": "MUST",
+                    "pass": has_dry_run,
+                }
+            )
+
+        # §1.1 — description exists
+        has_description = bool(cmd.get("description", "").strip())
+        results.append(
+            {
+                "check": f"{cmd_name}: has description",
+                "spec": "§1.1",
+                "level": "MUST",
+                "pass": has_description,
+            }
+        )
+
         # §6 — idempotency declared
         has_idempotent = "idempotent" in cmd
         results.append(
@@ -304,6 +314,17 @@ def _validate_tree(tree: dict[str, Any]) -> list[dict[str, Any]]:
                 "spec": "§6",
                 "level": "SHOULD",
                 "pass": has_idempotent,
+            }
+        )
+
+        # §1.1 — SEE ALSO present
+        has_see_also = bool(cmd.get("see_also"))
+        results.append(
+            {
+                "check": f"{cmd_name}: SEE ALSO references",
+                "spec": "§1.1",
+                "level": "SHOULD",
+                "pass": has_see_also,
             }
         )
 

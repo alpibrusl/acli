@@ -96,6 +96,7 @@ class TestACLIApp:
 
         parsed = json.loads(output)
         assert parsed["ok"] is False
+        assert parsed["command"] == "t"
         assert parsed["error"]["code"] == "INVALID_ARGS"
         assert parsed["error"]["hint"] == "fix it"
 
@@ -124,6 +125,7 @@ class TestACLIApp:
 
         parsed = json.loads(output)
         assert parsed["ok"] is False
+        assert parsed["command"] == "t"
         assert "oh no" in parsed["error"]["message"]
 
     def test_add_typer(self, tmp_path: Path) -> None:

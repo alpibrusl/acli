@@ -26,7 +26,20 @@ def _sample_tree() -> dict:
                 "idempotent": False,
                 "options": [
                     {"name": "file", "type": "path", "description": "File to run."},
+                    {
+                        "name": "dry_run",
+                        "type": "bool",
+                        "description": "Preview.",
+                        "default": False,
+                    },
+                    {
+                        "name": "output",
+                        "type": "OutputFormat",
+                        "description": "Output format.",
+                        "default": "text",
+                    },
                 ],
+                "see_also": ["status"],
                 "arguments": [],
                 "examples": [
                     {"description": "Run a file", "invocation": "testapp run --file x.yaml"},

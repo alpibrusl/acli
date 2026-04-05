@@ -155,8 +155,9 @@ class ACLIApp:
     # ── Error handling ────────────────────────────────────────────────────────
 
     def _handle_acli_error(self, exc: ACLIError) -> None:
+        cmd_name = exc.command or self.name
         envelope = error_envelope(
-            "",
+            cmd_name,
             code=exc.code.name,
             message=str(exc),
             hint=exc.hint,
@@ -168,7 +169,7 @@ class ACLIApp:
 
     def _handle_unexpected_error(self, exc: Exception) -> None:
         envelope = error_envelope(
-            "",
+            self.name,
             code="GENERAL_ERROR",
             message=str(exc),
             hint="This is an unexpected error. Please report it.",
