@@ -124,29 +124,29 @@ def _render_command(lines: list[str], tool_name: str, cmd: dict[str, Any]) -> No
         lines.append("")
 
     # Options
-    for opt in cmd.get("options", []):
-        if not lines[-1].startswith("### Options"):
-            lines.append("### Options")
-            lines.append("")
-        opt_name = opt["name"].replace("_", "-")
-        opt_type = opt.get("type", "")
-        opt_desc = opt.get("description", "")
-        default = opt.get("default")
-        default_str = f" [default: {default}]" if default is not None else ""
-        lines.append(f"- `--{opt_name}` ({opt_type}) — {opt_desc}{default_str}")
-    if cmd.get("options"):
+    options = cmd.get("options", [])
+    if options:
+        lines.append("### Options")
+        lines.append("")
+        for opt in options:
+            opt_name = opt["name"].replace("_", "-")
+            opt_type = opt.get("type", "")
+            opt_desc = opt.get("description", "")
+            default = opt.get("default")
+            default_str = f" [default: {default}]" if default is not None else ""
+            lines.append(f"- `--{opt_name}` ({opt_type}) — {opt_desc}{default_str}")
         lines.append("")
 
     # Arguments
-    for arg in cmd.get("arguments", []):
-        if not lines[-1].startswith("### Arguments"):
-            lines.append("### Arguments")
-            lines.append("")
-        req = "required" if arg.get("required") else "optional"
-        arg_type = arg.get("type", "")
-        arg_desc = arg.get("description", "")
-        lines.append(f"- `{arg['name']}` ({arg_type}, {req}) — {arg_desc}")
-    if cmd.get("arguments"):
+    arguments = cmd.get("arguments", [])
+    if arguments:
+        lines.append("### Arguments")
+        lines.append("")
+        for arg in arguments:
+            req = "required" if arg.get("required") else "optional"
+            arg_type = arg.get("type", "")
+            arg_desc = arg.get("description", "")
+            lines.append(f"- `{arg['name']}` ({arg_type}, {req}) — {arg_desc}")
         lines.append("")
 
     # Examples
