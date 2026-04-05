@@ -1,7 +1,5 @@
 """Entry point for {{name}}."""
 
-from pathlib import Path
-
 import typer
 
 from acli import ACLIApp, OutputFormat, acli_command, emit, success_envelope

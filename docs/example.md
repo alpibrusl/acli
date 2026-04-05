@@ -128,7 +128,7 @@ $ weather get --city mars --output json
 ```json
 {
   "ok": false,
-  "command": "",
+  "command": "weather",
   "error": {
     "code": "NOT_FOUND",
     "message": "Unknown city: 'mars'",
