@@ -29,6 +29,37 @@ def run(...) -> None:
 | `idempotent` | `bool \| "conditional"` | No | Whether the command is safe to retry. Default: `False`. |
 | `see_also` | `list[str]` | No | Related command names for the SEE ALSO section. |
 
+### Auto-injected parameters
+
+The decorator automatically adds parameters that the spec requires:
+
+- **`--output`** (§2.1): Added if not already present. Supports `text|json|table`.
+- **`--dry-run`** (§5): Added if `idempotent=False` and not already present.
+
+This means a minimal command needs no boilerplate:
+
+```python
+@app.command()
+@acli_command(
+    examples=[("Run task", "myapp run --file x.yaml"), ("Dry run", "myapp run --file x.yaml --dry-run")],
+    idempotent=False,
+)
+def run(file: str = typer.Option(..., help="File to run. type:path")) -> None:
+    """Run a task."""
+    # --output and --dry-run are available automatically
+    ...
+```
+
+If you need to access the injected values, declare them explicitly and they won't be duplicated:
+
+```python
+def run(
+    file: str = typer.Option(...),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    output: OutputFormat = typer.Option(OutputFormat.text),
+) -> None: ...
+```
+
 ### Validation
 
 The decorator raises `ValueError` at import time if:

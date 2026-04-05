@@ -72,6 +72,7 @@ The `acli` command is the meta-CLI for working with ACLI tools:
 | Command | Description |
 |---------|-------------|
 | `acli validate --bin <tool>` | Validate a tool against the ACLI spec checklist |
+| `acli validate --bin <tool> --deep` | Deep validation: runs the tool and checks JSON envelopes |
 | `acli skill --bin <tool>` | Generate a skill file for a tool |
 | `acli init --name <name>` | Scaffold a new ACLI-compliant Python project |
 

@@ -11,12 +11,16 @@ The spec lives in `ACLI_SPEC.md` (v0.1.0, draft). This is a monorepo: language S
 ## Repo structure
 
 ```
-ACLI_SPEC.md          # The specification document
+ACLI_SPEC.md              # The specification document
 sdks/
-  python/             # Python SDK (acli-spec package)
-    src/acli/         # Source code
-    tests/            # Test suite
-    pyproject.toml    # Package config, linting, test settings
+  python/                 # Python SDK (acli-spec package)
+    src/acli/             # Source code
+    tests/                # Test suite
+    pyproject.toml        # Package config, linting, test settings
+examples/
+  weather/weather.py      # Complete example ACLI tool
+docs/                     # MkDocs documentation source
+mkdocs.yml                # MkDocs config (Material theme)
 ```
 
 ## Python SDK
@@ -53,21 +57,15 @@ pytest tests/test_app.py::TestACLIApp::test_has_introspect_command
 
 The SDK wraps Typer to enforce the ACLI spec automatically:
 
-- **`app.py`** — `ACLIApp` class: wraps `typer.Typer`, auto-registers `introspect` and `version` commands, handles `ACLIError` → JSON error envelope conversion
-- **`command.py`** — `@acli_command` decorator: attaches `CommandMeta` (examples, idempotency, see_also) to command functions
-- **`output.py`** — `OutputFormat` enum + `success_envelope()`/`error_envelope()`/`emit()` for the JSON envelope contract
+- **`app.py`** — `ACLIApp` class: wraps `typer.Typer`, auto-registers `introspect`, `version`, and `skill` commands, handles `ACLIError` → JSON error envelope conversion
+- **`command.py`** — `@acli_command` decorator: attaches metadata, **auto-injects `--output`** on all commands and **`--dry-run` on `idempotent=False`** commands
+- **`output.py`** — `OutputFormat` enum + `success_envelope()`/`error_envelope()`/`emit()` for JSON envelopes, plus `emit_progress()`/`emit_result()` for NDJSON streaming
 - **`exit_codes.py`** — `ExitCode` IntEnum mapping the spec's semantic exit codes (0-9)
 - **`errors.py`** — `ACLIError` hierarchy (`InvalidArgsError`, `NotFoundError`, `ConflictError`, `PreconditionError`) + `suggest_flag()` for typo correction
 - **`introspect.py`** — `build_command_tree()` extracts the full command tree from a Typer app via reflection
-- **`cli_folder.py`** — `generate_cli_folder()` writes the `.cli/` reference folder (commands.json, README, examples, changelog)
-
-### Spec core concepts
-
-- **Progressive Discovery**: agents bootstrap understanding via `--help` → `introspect` → `.cli/` folder
-- **Output contracts**: all commands support `--output json|text|table`; JSON uses envelope `{ok, command, data|error, meta}`
-- **Semantic exit codes**: 0=success, 2=invalid args, 3=not found, 4=permission denied, 5=conflict, 6=timeout, 7=upstream error, 8=precondition failed, 9=dry-run
-- **Dry-run**: every state-modifying command must support `--dry-run`
-- **Idempotency**: each command declares `idempotent: true|false|conditional`
+- **`cli_folder.py`** — `generate_cli_folder()` writes the `.cli/` reference folder
+- **`skill.py`** — `generate_skill()` generates SKILLS.md from command tree for agent bootstrapping
+- **`cli.py`** — The `acli` meta-CLI: `validate` (with `--deep`), `skill`, `init` commands. Uses templates from `templates/` for scaffolding
 
 ### Linting conventions
 

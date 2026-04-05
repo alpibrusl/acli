@@ -79,3 +79,30 @@ The `emit` function handles format-specific rendering:
 - **JSON**: `json.dump` with 2-space indent to stdout
 - **Text**: key-value pairs for success, formatted error block for errors (to stderr)
 - **Table**: column-aligned ASCII table for list data, key-value for dicts
+
+## NDJSON streaming
+
+For long-running commands, use `emit_progress` and `emit_result` to stream newline-delimited JSON per spec §2.3:
+
+```python
+from acli import emit_progress, emit_result
+
+# Stream progress updates
+emit_progress("validate", "ok")
+emit_progress("build", "running", detail="compiling module A")
+emit_progress("deploy", "running", detail="pushing to staging")
+
+# Emit final result
+emit_result({"deployed": True, "environment": "staging"})
+```
+
+Output (one JSON object per line):
+
+```
+{"type": "progress", "step": "validate", "status": "ok"}
+{"type": "progress", "step": "build", "status": "running", "detail": "compiling module A"}
+{"type": "progress", "step": "deploy", "status": "running", "detail": "pushing to staging"}
+{"type": "result", "ok": true, "deployed": true, "environment": "staging"}
+```
+
+Use `emit_result(data, ok=False)` for streaming errors.

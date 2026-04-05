@@ -166,6 +166,33 @@ $ weather favorite --city paris --dry-run --output json
 
 The agent can review the planned action and decide whether to proceed without `--dry-run`.
 
+**NDJSON streaming for long-running operations:**
+
+```
+$ weather refresh --cities london,paris,tokyo
+```
+
+```
+{"type":"progress","step":"refresh","status":"running","detail":"Fetching data for london"}
+{"type":"progress","step":"refresh","status":"running","detail":"Fetching data for paris"}
+{"type":"progress","step":"refresh","status":"running","detail":"Fetching data for tokyo"}
+{"type":"result","ok":true,"cities_refreshed":["london","paris","tokyo"],"count":3}
+```
+
+The agent can parse each line as it arrives, tracking progress in real time. Note that `refresh` has `idempotent=False`, so `--dry-run` and `--output` were **auto-injected** by `@acli_command` — no need to declare them.
+
+**Deep validation:**
+
+```
+$ acli validate --bin weather --deep
+  ...
+  [PASS] MUST   top-level --help runs successfully (§1.1)
+  [PASS] MUST   get: JSON error envelope on bad input (§2.2)
+  [PASS] MUST   version --output json returns valid envelope (§7.1)
+```
+
+The `--deep` flag actually runs the tool and verifies that JSON envelopes are correctly formed.
+
 ## Generated skill file
 
 Running `weather skill` auto-generates a SKILLS.md that gives agents immediate context:
