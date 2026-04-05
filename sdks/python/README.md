@@ -49,4 +49,4 @@ if __name__ == "__main__":
 
 ## License
 
-MIT
+[EUPL-1.2](../../LICENSE)

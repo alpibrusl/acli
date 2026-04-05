@@ -33,3 +33,6 @@ Thumbs.db
 
 # ACLI generated
 .cli/
+
+# MkDocs
+site/

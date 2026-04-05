@@ -1,0 +1,74 @@
+site_name: ACLI
+site_description: Agent-friendly CLI specification and SDKs
+site_url: https://alpibrusl.github.io/acli
+repo_url: https://github.com/alpibrusl/acli
+repo_name: alpibrusl/acli
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Specification:
+      - Overview: spec/index.md
+      - Progressive Discovery: spec/discovery.md
+      - Output Contracts: spec/output.md
+      - Exit Codes: spec/exit-codes.md
+      - Error Design: spec/errors.md
+      - Dry-run & Idempotency: spec/dry-run.md
+      - Compliance Checklist: spec/compliance.md
+  - Python SDK:
+      - Getting Started: python-sdk/index.md
+      - ACLIApp: python-sdk/app.md
+      - Commands: python-sdk/commands.md
+      - Output & Envelopes: python-sdk/output.md
+      - Errors: python-sdk/errors.md
+      - Introspection: python-sdk/introspection.md
+  - Contributing: contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/alpibrusl/acli

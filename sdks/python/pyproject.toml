@@ -7,14 +7,14 @@ name = "acli-spec"
 version = "0.1.0"
 description = "Python SDK for the ACLI (Agent-friendly CLI) specification"
 readme = "README.md"
-license = "MIT"
+license = "EUPL-1.2"
 requires-python = ">=3.10"
 authors = [{ name = "ACLI Contributors" }]
 keywords = ["cli", "agent", "ai", "specification"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
