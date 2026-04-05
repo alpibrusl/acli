@@ -26,6 +26,13 @@ dependencies = [
     "typer>=0.9.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/alpibrusl/acli"
+Documentation = "https://alpibrusl.github.io/acli"
+Repository = "https://github.com/alpibrusl/acli"
+Issues = "https://github.com/alpibrusl/acli/issues"
+Changelog = "https://github.com/alpibrusl/acli/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
