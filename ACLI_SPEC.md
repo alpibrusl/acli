@@ -417,4 +417,4 @@ Use `acli validate` to check compliance automatically.
 
 ---
 
-*ACLI is inspired by the Progressive Skills pattern observed in [Scion](https://googlecloudplatform.github.io/scion/philosophy/) (Google Cloud Platform) and motivated by practical experience building agent-native CLIs for multi-agent platforms.*
+*The concept of agents discovering tools at runtime has emerged independently in several projects, notably as Progressive Skills in [Scion](https://googlecloudplatform.github.io/scion/philosophy/) (Google Cloud Platform). ACLI formalises this idea into a specification, motivated by practical experience building agent-native CLIs for multi-agent platforms.*

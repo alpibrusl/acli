@@ -95,3 +95,7 @@ These stages are not mutually exclusive. A well-designed tool ecosystem might us
 - **ACLI** for CLI tools that need to be self-describing and independently discoverable
 
 ACLI targets the gap where MCP is too heavy and SKILLS.md is too fragile: **standalone CLI tools that agents need to use reliably without prior configuration**.
+
+## See also
+
+The idea of agents discovering tools at runtime through `--help` has emerged independently in several projects. Notably, [Scion](https://googlecloudplatform.github.io/scion/philosophy/) (Google Cloud Platform) refers to this pattern as **Progressive Skills**. ACLI formalises this concept into a full specification — adding structured output contracts, semantic exit codes, introspection commands, and persistent discovery artifacts.

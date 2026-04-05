@@ -83,6 +83,10 @@ You automatically get:
 | Rust     | 🔜 Planned  | — |
 | Node.js  | 🔜 Planned  | — |
 
+## See also
+
+The concept of agents discovering tools at runtime has emerged independently in several projects, notably as [Progressive Skills](https://googlecloudplatform.github.io/scion/philosophy/) in Scion (Google Cloud Platform).
+
 ## License
 
 [EUPL-1.2](https://github.com/alpibrusl/acli/blob/main/LICENSE)

@@ -2,6 +2,9 @@
 
 An agent should be able to learn the full capability surface of a tool incrementally, starting from `--help`.
 
+!!! note "See also"
+    The same concept of agents learning tools at runtime via `--help` appears independently in other projects, notably as **Progressive Skills** in [Scion](https://googlecloudplatform.github.io/scion/philosophy/) (Google Cloud Platform). ACLI formalises this idea into a full specification with structured output, semantic exit codes, and persistent discovery artifacts.
+
 ## `--help` structure
 
 Every command and subcommand **MUST** expose `--help` with these sections, in order:
