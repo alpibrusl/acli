@@ -59,4 +59,6 @@ docs: update Python SDK quick start example
 
 ## Code of Conduct
 
+This project is licensed under the [EUPL-1.2](LICENSE).
+
 This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
