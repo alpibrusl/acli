@@ -67,6 +67,7 @@ nav:
       - Output & Envelopes: python-sdk/output.md
       - Errors: python-sdk/errors.md
       - Introspection: python-sdk/introspection.md
+      - Skill Files & acli CLI: python-sdk/skill.md
   - Contributing: contributing.md
 
 extra:

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -13,9 +14,7 @@ from acli.errors import ACLIError
 from acli.exit_codes import ExitCode
 from acli.introspect import build_command_tree
 from acli.output import OutputFormat, emit, error_envelope, success_envelope
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from acli.skill import generate_skill
 
 
 class ACLIApp:
@@ -39,6 +38,7 @@ class ACLIApp:
         self._typer = typer.Typer(name=name, help=typer_kwargs.pop("help", None), **typer_kwargs)
         self._register_introspect()
         self._register_version()
+        self._register_skill()
 
     @property
     def typer_app(self) -> typer.Typer:
@@ -124,6 +124,33 @@ class ACLIApp:
             tree = self.get_command_tree()
             if needs_update(tree, self.cli_dir):
                 generate_cli_folder(tree, self.cli_dir)
+
+    def _register_skill(self) -> None:
+        @self._typer.command(name="skill", hidden=True)
+        def skill_cmd(
+            out: str = typer.Option(
+                "",
+                "--out",
+                help="Write skill file to this path instead of stdout. type:path",
+            ),
+            output: OutputFormat = typer.Option(
+                OutputFormat.text,
+                "--output",
+                help="Output format. type:enum[text|json|table]",
+            ),
+        ) -> None:
+            """Generate a SKILLS.md file for agent bootstrapping."""
+            tree = self.get_command_tree()
+            target = Path(out) if out else None
+            content = generate_skill(tree, target_path=target)
+
+            if output == OutputFormat.json:
+                data = {"path": str(target) if target else None, "content": content}
+                emit(success_envelope("skill", data, version=self.version), output)
+            elif target:
+                sys.stdout.write(f"Skill file written to {target}\n")
+            else:
+                sys.stdout.write(content)
 
     # ── Error handling ────────────────────────────────────────────────────────
 

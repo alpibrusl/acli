@@ -12,6 +12,7 @@ from acli.errors import (
 )
 from acli.exit_codes import ExitCode
 from acli.output import OutputFormat, emit, error_envelope, success_envelope
+from acli.skill import generate_skill
 
 __all__ = [
     "ACLIApp",
@@ -27,6 +28,7 @@ __all__ = [
     "acli_command",
     "emit",
     "error_envelope",
+    "generate_skill",
     "success_envelope",
     "suggest_flag",
 ]
