@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from acli.cli import _load_tree, _run_introspect, _validate_tree, app
+from acli.cli import _deep_validate, _load_tree, _run_introspect, _validate_tree, app
 
 
 def _sample_tree() -> dict:
@@ -416,3 +416,70 @@ class TestInitValidation:
         finally:
             os.chdir(old_cwd)
             sys.stderr = old_stderr
+
+
+class TestDeepValidate:
+    def test_help_success(self) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "Usage: testapp [OPTIONS] COMMAND"
+        with patch("acli.cli.subprocess.run", return_value=mock_result):
+            results = _deep_validate("testapp", _sample_tree())
+        help_check = next(r for r in results if "help" in r["check"])
+        assert help_check["pass"] is True
+
+    def test_help_failure(self) -> None:
+        with patch("acli.cli.subprocess.run", side_effect=FileNotFoundError):
+            results = _deep_validate("nonexistent", _sample_tree())
+        help_check = next(r for r in results if "help" in r["check"])
+        assert help_check["pass"] is False
+
+    def test_version_json_valid(self) -> None:
+        def mock_run(cmd, **kwargs):
+            m = MagicMock()
+            if "version" in cmd:
+                m.returncode = 0
+                m.stdout = json.dumps(
+                    {
+                        "ok": True,
+                        "data": {"tool": "testapp", "version": "1.0.0"},
+                    }
+                )
+            else:
+                m.returncode = 0
+                m.stdout = "help text"
+                m.stderr = ""
+            return m
+
+        with patch("acli.cli.subprocess.run", side_effect=mock_run):
+            results = _deep_validate("testapp", _sample_tree())
+        ver_check = next(r for r in results if "version" in r["check"])
+        assert ver_check["pass"] is True
+
+    def test_error_envelope_check(self) -> None:
+        error_envelope = json.dumps(
+            {
+                "ok": False,
+                "error": {"code": "INVALID_ARGS", "message": "bad flag"},
+            }
+        )
+
+        def mock_run(cmd, **kwargs):
+            m = MagicMock()
+            if "--bad-flag-xyz" in cmd:
+                m.returncode = 2
+                m.stdout = error_envelope
+                m.stderr = ""
+            elif "version" in cmd:
+                m.returncode = 0
+                m.stdout = json.dumps({"ok": True, "data": {"version": "1.0.0"}})
+            else:
+                m.returncode = 0
+                m.stdout = "help"
+                m.stderr = ""
+            return m
+
+        with patch("acli.cli.subprocess.run", side_effect=mock_run):
+            results = _deep_validate("testapp", _sample_tree())
+        envelope_checks = [r for r in results if "envelope" in r["check"]]
+        assert any(r["pass"] for r in envelope_checks)

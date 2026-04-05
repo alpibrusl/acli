@@ -11,7 +11,14 @@ from acli.errors import (
     suggest_flag,
 )
 from acli.exit_codes import ExitCode
-from acli.output import OutputFormat, emit, error_envelope, success_envelope
+from acli.output import (
+    OutputFormat,
+    emit,
+    emit_progress,
+    emit_result,
+    error_envelope,
+    success_envelope,
+)
 from acli.skill import generate_skill
 
 __all__ = [
@@ -27,6 +34,8 @@ __all__ = [
     "PreconditionError",
     "acli_command",
     "emit",
+    "emit_progress",
+    "emit_result",
     "error_envelope",
     "generate_skill",
     "success_envelope",
