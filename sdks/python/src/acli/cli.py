@@ -47,24 +47,10 @@ def validate(
     the ACLI spec: help structure, examples, output format, exit codes,
     dry-run support, and idempotency declarations.
     """
-    if not bin_name:
-        # Try to find a .cli/ folder in cwd
-        cli_dir = Path.cwd() / ".cli"
-        if cli_dir.exists():
-            commands_file = cli_dir / "commands.json"
-            if commands_file.exists():
-                tree = json.loads(commands_file.read_text())
-                results = _validate_tree(tree)
-                _emit_results(results, tree.get("name", "unknown"), output)
-                return
-        sys.stderr.write("No --bin specified and no .cli/ folder found in current directory.\n")
-        sys.stderr.write("Usage: acli validate --bin <tool>\n")
-        raise SystemExit(2)
-
-    # Run the tool's introspect command
-    tree = _run_introspect(bin_name)
+    tree = _load_tree(bin_name)
+    tool_name = bin_name or tree.get("name", "unknown")
     results = _validate_tree(tree)
-    _emit_results(results, bin_name, output)
+    _emit_results(results, tool_name, output)
 
 
 @app.command()
@@ -98,26 +84,7 @@ def skill(
     gap: agents get Stage 2 context (SKILLS.md) auto-generated from Stage 3
     source of truth (the tool itself).
     """
-    if not bin_name:
-        cli_dir = Path.cwd() / ".cli"
-        if cli_dir.exists():
-            commands_file = cli_dir / "commands.json"
-            if commands_file.exists():
-                tree = json.loads(commands_file.read_text())
-                target = Path(out) if out else None
-                content = generate_skill(tree, target_path=target)
-                if output == OutputFormat.json:
-                    data = {"path": str(target) if target else None, "content": content}
-                    emit(success_envelope("skill", data, version="0.1.0"), output)
-                elif target:
-                    sys.stdout.write(f"Skill file written to {target}\n")
-                else:
-                    sys.stdout.write(content)
-                return
-        sys.stderr.write("No --bin specified and no .cli/ folder found.\n")
-        raise SystemExit(2)
-
-    tree = _run_introspect(bin_name)
+    tree = _load_tree(bin_name)
     target = Path(out) if out else None
     content = generate_skill(tree, target_path=target)
 
@@ -151,7 +118,15 @@ def init(
     Creates a minimal project structure with ACLIApp, pyproject.toml,
     and a sample command that follows the specification.
     """
+    if not name.isidentifier():
+        sys.stderr.write(f"Invalid project name: '{name}' (must be a valid Python identifier)\n")
+        raise SystemExit(2)
+
     target = Path.cwd() / name
+    if target.resolve().parent != Path.cwd().resolve():
+        sys.stderr.write(f"Invalid project name: '{name}' (path traversal not allowed)\n")
+        raise SystemExit(2)
+
     if target.exists():
         sys.stderr.write(f"Directory {target} already exists.\n")
         raise SystemExit(5)
@@ -218,6 +193,22 @@ def init(
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+def _load_tree(bin_name: str) -> dict[str, Any]:
+    """Load a command tree from --bin or from .cli/commands.json in cwd."""
+    if bin_name:
+        return _run_introspect(bin_name)
+
+    cli_dir = Path.cwd() / ".cli"
+    if cli_dir.exists():
+        commands_file = cli_dir / "commands.json"
+        if commands_file.exists():
+            return json.loads(commands_file.read_text())  # type: ignore[no-any-return]
+
+    sys.stderr.write("No --bin specified and no .cli/ folder found in current directory.\n")
+    sys.stderr.write("Usage: acli <command> --bin <tool>\n")
+    raise SystemExit(2)
 
 
 def _run_introspect(bin_name: str) -> dict[str, Any]:

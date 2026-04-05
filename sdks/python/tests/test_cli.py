@@ -9,7 +9,9 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from acli.cli import _run_introspect, _validate_tree, app
+import pytest
+
+from acli.cli import _load_tree, _run_introspect, _validate_tree, app
 
 
 def _sample_tree() -> dict:
@@ -99,16 +101,14 @@ class TestValidateTree:
 
 
 class TestValidateCommand:
-    def test_validate_from_cli_folder(self, tmp_path: Path) -> None:
-        cli_dir = tmp_path / ".cli"
-        cli_dir.mkdir()
-        (cli_dir / "commands.json").write_text(json.dumps(_sample_tree()))
-
+    def test_validate_from_cli_folder(self) -> None:
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
-            with patch("sys.argv", ["acli", "validate"]), patch("acli.cli.Path") as mock_path:
-                mock_path.cwd.return_value = tmp_path
+            with (
+                patch("sys.argv", ["acli", "validate"]),
+                patch("acli.cli._load_tree", return_value=_sample_tree()),
+            ):
                 try:
                     app.run()
                 except SystemExit as e:
@@ -122,20 +122,14 @@ class TestValidateCommand:
 
 class TestSkillCommand:
     def test_skill_writes_file(self, tmp_path: Path) -> None:
-        cli_dir = tmp_path / ".cli"
-        cli_dir.mkdir()
-        (cli_dir / "commands.json").write_text(json.dumps(_sample_tree()))
-
         out_path = tmp_path / "SKILLS.md"
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
             with (
                 patch("sys.argv", ["acli", "skill", "--out", str(out_path)]),
-                patch("acli.cli.Path") as mock_path,
+                patch("acli.cli._load_tree", return_value=_sample_tree()),
             ):
-                mock_path.cwd.return_value = tmp_path
-                mock_path.side_effect = Path
                 try:
                     app.run()
                 except SystemExit:
@@ -258,48 +252,51 @@ class TestRunIntrospect:
         assert result["name"] == "testapp"
 
 
-class TestValidateNoArgs:
+class TestLoadTree:
     def test_no_bin_no_cli_folder(self, tmp_path: Path) -> None:
-        old_stderr = sys.stderr
-        sys.stderr = StringIO()
+        import os
+
+        old_cwd = Path.cwd()
         try:
-            with patch("sys.argv", ["acli", "validate"]), patch("acli.cli.Path") as mock_path:
-                mock_path.cwd.return_value = tmp_path
-                try:
-                    app.run()
-                except SystemExit as e:
-                    assert e.code == 2
+            os.chdir(tmp_path)
+            with pytest.raises(SystemExit) as exc_info:
+                _load_tree("")
+            assert exc_info.value.code == 2
         finally:
-            sys.stderr = old_stderr
+            os.chdir(old_cwd)
 
+    def test_loads_from_cli_folder(self, tmp_path: Path) -> None:
+        import os
 
-class TestSkillNoArgs:
-    def test_no_bin_no_cli_folder(self, tmp_path: Path) -> None:
-        old_stderr = sys.stderr
-        sys.stderr = StringIO()
-        try:
-            with patch("sys.argv", ["acli", "skill"]), patch("acli.cli.Path") as mock_path:
-                mock_path.cwd.return_value = tmp_path
-                try:
-                    app.run()
-                except SystemExit as e:
-                    assert e.code == 2
-        finally:
-            sys.stderr = old_stderr
-
-    def test_skill_json_output(self, tmp_path: Path) -> None:
         cli_dir = tmp_path / ".cli"
         cli_dir.mkdir()
         (cli_dir / "commands.json").write_text(json.dumps(_sample_tree()))
+        old_cwd = Path.cwd()
+        try:
+            os.chdir(tmp_path)
+            tree = _load_tree("")
+            assert tree["name"] == "testapp"
+        finally:
+            os.chdir(old_cwd)
 
+    def test_loads_from_bin(self) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = json.dumps({"ok": True, "data": _sample_tree()})
+        with patch("acli.cli.subprocess.run", return_value=mock_result):
+            tree = _load_tree("sometool")
+        assert tree["name"] == "testapp"
+
+
+class TestSkillViaLoadTree:
+    def test_skill_json_output(self) -> None:
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
             with (
                 patch("sys.argv", ["acli", "skill", "--output", "json"]),
-                patch("acli.cli.Path") as mock_path,
+                patch("acli.cli._load_tree", return_value=_sample_tree()),
             ):
-                mock_path.cwd.return_value = tmp_path
                 try:
                     app.run()
                 except SystemExit:
@@ -312,16 +309,14 @@ class TestSkillNoArgs:
         assert parsed["ok"] is True
         assert "# testapp" in parsed["data"]["content"]
 
-    def test_skill_stdout(self, tmp_path: Path) -> None:
-        cli_dir = tmp_path / ".cli"
-        cli_dir.mkdir()
-        (cli_dir / "commands.json").write_text(json.dumps(_sample_tree()))
-
+    def test_skill_stdout(self) -> None:
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
-            with patch("sys.argv", ["acli", "skill"]), patch("acli.cli.Path") as mock_path:
-                mock_path.cwd.return_value = tmp_path
+            with (
+                patch("sys.argv", ["acli", "skill"]),
+                patch("acli.cli._load_tree", return_value=_sample_tree()),
+            ):
                 try:
                     app.run()
                 except SystemExit:
@@ -334,18 +329,13 @@ class TestSkillNoArgs:
 
 
 class TestValidateWithBin:
-    def test_validate_bin_json(self, tmp_path: Path) -> None:
-        tree = _sample_tree()
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = json.dumps({"ok": True, "data": tree})
-
+    def test_validate_bin_json(self) -> None:
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
             with (
                 patch("sys.argv", ["acli", "validate", "--bin", "testapp", "--output", "json"]),
-                patch("acli.cli.subprocess.run", return_value=mock_result),
+                patch("acli.cli._load_tree", return_value=_sample_tree()),
             ):
                 try:
                     app.run()
@@ -367,17 +357,49 @@ class TestEmitResultsFailing:
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
-            with patch("sys.argv", ["acli", "validate"]), patch("acli.cli.Path") as mock_path:
-                cli_dir = MagicMock()
-                cli_dir.exists.return_value = True
-                commands_file = MagicMock()
-                commands_file.exists.return_value = True
-                commands_file.read_text.return_value = json.dumps(tree)
-                cli_dir.__truediv__ = lambda self, key: commands_file
-                mock_path.cwd.return_value.__truediv__ = lambda self, key: cli_dir
+            with (
+                patch("sys.argv", ["acli", "validate"]),
+                patch("acli.cli._load_tree", return_value=tree),
+            ):
                 try:
                     app.run()
                 except SystemExit as e:
                     assert e.code == 8
         finally:
             sys.stdout = old_stdout
+
+
+class TestInitValidation:
+    def test_rejects_non_identifier(self, tmp_path: Path) -> None:
+        import os
+
+        old_cwd = Path.cwd()
+        old_stderr = sys.stderr
+        sys.stderr = StringIO()
+        try:
+            os.chdir(tmp_path)
+            with patch("sys.argv", ["acli", "init", "--name", "not-valid"]):
+                try:
+                    app.run()
+                except SystemExit as e:
+                    assert e.code == 2
+        finally:
+            os.chdir(old_cwd)
+            sys.stderr = old_stderr
+
+    def test_rejects_path_traversal(self, tmp_path: Path) -> None:
+        import os
+
+        old_cwd = Path.cwd()
+        old_stderr = sys.stderr
+        sys.stderr = StringIO()
+        try:
+            os.chdir(tmp_path)
+            with patch("sys.argv", ["acli", "init", "--name", "../../etc"]):
+                try:
+                    app.run()
+                except SystemExit as e:
+                    assert e.code == 2
+        finally:
+            os.chdir(old_cwd)
+            sys.stderr = old_stderr
