@@ -6,13 +6,15 @@ ACLI is a lightweight specification for designing CLI tools that agents can boot
 
 ## How it works
 
+Agent tool integration has evolved through three stages:
+
 ```
 MCP           → schema defined externally, injected at agent startup
 SKILLS.md     → instructions written by humans, loaded into context
 <cli> --help  → tool teaches itself to the agent on demand
 ```
 
-ACLI formalises what "well-designed" means in an agentic context, targeting the third stage.
+ACLI targets the third stage — where the tool *is* the source of truth, not an external schema or a hand-written doc. Read the full comparison in [Why ACLI? MCP → Skills → CLI](spec/evolution.md).
 
 ## Key principles
 

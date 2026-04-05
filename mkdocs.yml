@@ -53,6 +53,7 @@ nav:
   - Home: index.md
   - Specification:
       - Overview: spec/index.md
+      - "Why ACLI? MCP → Skills → CLI": spec/evolution.md
       - Progressive Discovery: spec/discovery.md
       - Output Contracts: spec/output.md
       - Exit Codes: spec/exit-codes.md
