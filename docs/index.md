@@ -1,3 +1,8 @@
+---
+title: ACLI — Agent-friendly CLI Specification and SDKs
+description: Build CLI tools that AI agents can discover, learn, and use autonomously. An alternative to MCP for CLI tools — no external schemas, no servers, just --help.
+---
+
 # ACLI — Agent-friendly CLI
 
 **Build CLI tools that AI agents can discover, learn, and use autonomously.**

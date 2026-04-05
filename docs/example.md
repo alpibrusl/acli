@@ -1,3 +1,8 @@
+---
+title: "Example: ACLI Weather CLI for AI Agents"
+description: Complete example of an ACLI-compliant weather CLI showing introspection, JSON envelopes, error handling, dry-run, and auto-generated skill files.
+---
+
 # Example: Weather CLI
 
 A complete ACLI-compliant weather tool that demonstrates every spec feature. This is the classic "weather" example used in AI agent demos — rebuilt to show how ACLI makes CLI tools agent-friendly.

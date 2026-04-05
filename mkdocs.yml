@@ -1,5 +1,5 @@
-site_name: ACLI
-site_description: Agent-friendly CLI specification and SDKs
+site_name: ACLI — Agent-friendly CLI
+site_description: "ACLI is a specification and SDK for building CLI tools that AI agents can discover, learn, and use autonomously — without MCP servers or external schemas."
 site_url: https://alpibrusl.github.io/acli
 repo_url: https://github.com/alpibrusl/acli
 repo_name: alpibrusl/acli
@@ -27,12 +27,16 @@ theme:
     - navigation.sections
     - navigation.expand
     - navigation.top
+    - navigation.indexes
     - content.code.copy
     - content.code.annotate
     - search.suggest
     - search.highlight
   icon:
     repo: fontawesome/brands/github
+
+plugins:
+  - search
 
 markdown_extensions:
   - admonition
@@ -46,6 +50,7 @@ markdown_extensions:
   - pymdownx.snippets
   - attr_list
   - md_in_html
+  - meta
   - toc:
       permalink: true
 
@@ -75,3 +80,5 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/alpibrusl/acli
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/acli-spec/

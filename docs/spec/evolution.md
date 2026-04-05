@@ -1,3 +1,8 @@
+---
+title: "Why ACLI? Evolution from MCP to Skills to CLI"
+description: How agent tool integration evolved through MCP, SKILLS.md, and ACLI — comparison of schema ownership, discovery, output format, and infrastructure requirements.
+---
+
 # Evolution of Agent Tool Integration
 
 AI agents need to use external tools. How those tools are made available to agents has evolved through three distinct stages — each solving limitations of the previous one.
