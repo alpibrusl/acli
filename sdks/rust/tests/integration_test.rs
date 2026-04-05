@@ -2,7 +2,7 @@ use acli::cli_folder::{generate_cli_folder, needs_update};
 use acli::errors::{invalid_args, not_found, suggest_flag, AcliError};
 use acli::exit_codes::ExitCode;
 use acli::introspect::{CommandInfo, CommandTree};
-use acli::output::{error_envelope, success_envelope, OutputFormat};
+use acli::output::{error_envelope, error_envelope_raw, success_envelope, OutputFormat};
 use acli::skill::generate_skill;
 use serde_json::json;
 use std::time::Instant;
@@ -73,7 +73,7 @@ fn test_success_envelope_with_timing() {
 fn test_error_envelope() {
     let env = error_envelope(
         "run",
-        "INVALID_ARGS",
+        ExitCode::InvalidArgs,
         "Missing --pipeline",
         Some("Run `noether run --help`"),
         Some(".cli/examples/run.sh"),
@@ -91,7 +91,7 @@ fn test_error_envelope() {
 
 #[test]
 fn test_error_envelope_no_hint() {
-    let env = error_envelope("run", "NOT_FOUND", "gone", None, None, "1.0.0", None);
+    let env = error_envelope("run", ExitCode::NotFound, "gone", None, None, "1.0.0", None);
     let err = env.error.unwrap();
     assert!(err.hint.is_none());
     assert!(err.docs.is_none());
@@ -286,7 +286,7 @@ fn test_needs_update() {
 #[test]
 fn test_generate_skill() {
     let tree = sample_tree();
-    let content = generate_skill(&tree, None);
+    let content = generate_skill(&tree, None).unwrap();
 
     assert!(content.contains("# noether"));
     assert!(content.contains("v1.0.0"));
@@ -301,7 +301,7 @@ fn test_skill_write_to_file() {
     let dir = TempDir::new().unwrap();
     let tree = sample_tree();
     let path = dir.path().join("SKILLS.md");
-    let content = generate_skill(&tree, Some(&path));
+    let content = generate_skill(&tree, Some(&path)).unwrap();
 
     assert!(path.exists());
     assert_eq!(std::fs::read_to_string(&path).unwrap(), content);
@@ -313,7 +313,7 @@ fn test_skill_excludes_builtins() {
     tree.add_command(CommandInfo::new("introspect", "Introspect"));
     tree.add_command(CommandInfo::new("version", "Version"));
 
-    let content = generate_skill(&tree, None);
+    let content = generate_skill(&tree, None).unwrap();
     let available = content
         .split("## Available commands")
         .nth(1)

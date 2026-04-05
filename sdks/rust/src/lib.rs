@@ -37,5 +37,6 @@ pub use errors::AcliError;
 pub use exit_codes::ExitCode;
 pub use introspect::{CommandInfo, CommandTree};
 pub use output::{
-    emit, emit_progress, emit_result, error_envelope, success_envelope, OutputFormat,
+    emit, emit_progress, emit_result, error_envelope, error_envelope_raw, success_envelope,
+    OutputFormat,
 };

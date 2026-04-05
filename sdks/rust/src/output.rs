@@ -1,5 +1,6 @@
 //! Output format handling and JSON envelope as defined by ACLI spec §2.
 
+use crate::exit_codes::ExitCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -118,8 +119,21 @@ pub fn dry_run_envelope(
     }
 }
 
-/// Build an error envelope.
+/// Build an error envelope using a typed ExitCode.
 pub fn error_envelope(
+    command: &str,
+    code: ExitCode,
+    message: &str,
+    hint: Option<&str>,
+    docs: Option<&str>,
+    version: &str,
+    start: Option<Instant>,
+) -> Envelope {
+    error_envelope_raw(command, code.name(), message, hint, docs, version, start)
+}
+
+/// Build an error envelope from a raw code string.
+pub fn error_envelope_raw(
     command: &str,
     code: &str,
     message: &str,
@@ -152,9 +166,9 @@ pub fn error_envelope(
 pub fn emit(envelope: &Envelope, format: &OutputFormat) {
     match format {
         OutputFormat::Json => {
-            let json =
-                serde_json::to_string_pretty(envelope).expect("Failed to serialize envelope");
-            println!("{json}");
+            if let Ok(json) = serde_json::to_string_pretty(envelope) {
+                println!("{json}");
+            }
         }
         OutputFormat::Text => emit_text(envelope),
         OutputFormat::Table => emit_table(envelope),
@@ -170,9 +184,10 @@ pub fn emit_progress(step: &str, status: &str, detail: Option<&str>) {
     if let Some(d) = detail {
         line.insert("detail".into(), Value::String(d.into()));
     }
-    let json = serde_json::to_string(&line).expect("Failed to serialize progress");
-    println!("{json}");
-    io::stdout().flush().ok();
+    if let Ok(json) = serde_json::to_string(&line) {
+        println!("{json}");
+        io::stdout().flush().ok();
+    }
 }
 
 /// Emit a final result line as NDJSON per spec §2.3.
@@ -185,9 +200,10 @@ pub fn emit_result(data: Value, ok: bool) {
             line.insert(k, v);
         }
     }
-    let json = serde_json::to_string(&line).expect("Failed to serialize result");
-    println!("{json}");
-    io::stdout().flush().ok();
+    if let Ok(json) = serde_json::to_string(&line) {
+        println!("{json}");
+        io::stdout().flush().ok();
+    }
 }
 
 fn emit_text(envelope: &Envelope) {

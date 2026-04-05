@@ -33,7 +33,6 @@ Thumbs.db
 
 # Rust
 target/
-Cargo.lock
 
 # ACLI generated
 .cli/

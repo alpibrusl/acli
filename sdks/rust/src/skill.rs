@@ -7,7 +7,7 @@ use std::path::Path;
 const BUILTIN_COMMANDS: &[&str] = &["introspect", "version", "skill"];
 
 /// Generate a SKILLS.md file from an ACLI command tree.
-pub fn generate_skill(tree: &CommandTree, target_path: Option<&Path>) -> String {
+pub fn generate_skill(tree: &CommandTree, target_path: Option<&Path>) -> std::io::Result<String> {
     let name = &tree.name;
     let version = &tree.version;
     let mut lines = Vec::new();
@@ -158,10 +158,10 @@ pub fn generate_skill(tree: &CommandTree, target_path: Option<&Path>) -> String 
 
     if let Some(path) = target_path {
         if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).ok();
+            fs::create_dir_all(parent)?;
         }
-        fs::write(path, &content).ok();
+        fs::write(path, &content)?;
     }
 
-    content
+    Ok(content)
 }
