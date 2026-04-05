@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-04-05
+
+### Fixed
+
+- Release pipeline: fix PyPI Trusted Publishing environment configuration
+
 ## [0.1.0] - 2026-04-05
 
 ### Added
@@ -26,5 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI pipeline with Python 3.10–3.13 matrix
 - Release pipeline with PyPI Trusted Publishing
 
-[Unreleased]: https://github.com/alpibrusl/acli/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/alpibrusl/acli/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/alpibrusl/acli/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/alpibrusl/acli/releases/tag/v0.1.0
