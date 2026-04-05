@@ -67,6 +67,34 @@ def error_envelope(
     }
 
 
+def emit_progress(
+    step: str,
+    status: str,
+    *,
+    detail: str | None = None,
+) -> None:
+    """Emit a progress line as NDJSON per ACLI spec §2.3.
+
+    Used for long-running commands to stream intermediate status.
+    """
+    line: dict[str, Any] = {"type": "progress", "step": step, "status": status}
+    if detail is not None:
+        line["detail"] = detail
+    sys.stdout.write(json.dumps(line) + "\n")
+    sys.stdout.flush()
+
+
+def emit_result(data: dict[str, Any], *, ok: bool = True) -> None:
+    """Emit a final result line as NDJSON per ACLI spec §2.3.
+
+    Terminates an NDJSON stream with the final result.
+    """
+    line: dict[str, Any] = {"type": "result", "ok": ok}
+    line.update(data)
+    sys.stdout.write(json.dumps(line) + "\n")
+    sys.stdout.flush()
+
+
 def emit(data: dict[str, Any], fmt: OutputFormat) -> None:
     """Write output to stdout in the requested format."""
     if fmt == OutputFormat.json:

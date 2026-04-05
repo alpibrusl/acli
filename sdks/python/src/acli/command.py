@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
+import inspect
 from typing import Any
+
+import typer
+
+from acli.output import OutputFormat
 
 
 @dataclasses.dataclass(frozen=True)
@@ -34,6 +40,9 @@ def acli_command(
 ) -> Any:
     """Decorator that attaches ACLI metadata to a Typer command function.
 
+    Automatically injects ``--output`` if not already present.
+    Automatically injects ``--dry-run`` if ``idempotent=False``.
+
     Args:
         examples: List of (description, invocation) tuples. At least 2 required per spec.
         idempotent: Whether the command is idempotent (True/False/"conditional").
@@ -55,7 +64,67 @@ def acli_command(
     )
 
     def decorator(func: Any) -> Any:
-        setattr(func, ACLI_META_ATTR, meta)
-        return func
+        wrapped = _inject_params(func, idempotent)
+        setattr(wrapped, ACLI_META_ATTR, meta)
+        return wrapped
 
     return decorator
+
+
+def _inject_params(func: Any, idempotent: bool | str) -> Any:
+    """Inject --output and --dry-run parameters if not already present."""
+    sig = inspect.signature(func)
+    params = dict(sig.parameters)
+    added_output = False
+    added_dry_run = False
+
+    if "output" not in params:
+        added_output = True
+
+    if idempotent is False and "dry_run" not in params:
+        added_dry_run = True
+
+    if not added_output and not added_dry_run:
+        return func
+
+    @functools.wraps(func)
+    def wrapper(**kwargs: Any) -> Any:
+        # Remove injected params before calling the original if it doesn't expect them
+        if added_output and "output" not in sig.parameters:
+            kwargs.pop("output", None)
+        if added_dry_run and "dry_run" not in sig.parameters:
+            kwargs.pop("dry_run", None)
+        return func(**kwargs)
+
+    # Build new parameter list
+    new_params = list(sig.parameters.values())
+
+    if added_output:
+        new_params.append(
+            inspect.Parameter(
+                "output",
+                inspect.Parameter.KEYWORD_ONLY,
+                default=typer.Option(
+                    OutputFormat.text,
+                    help="Output format. type:enum[text|json|table]",
+                ),
+                annotation=OutputFormat,
+            )
+        )
+
+    if added_dry_run:
+        new_params.append(
+            inspect.Parameter(
+                "dry_run",
+                inspect.Parameter.KEYWORD_ONLY,
+                default=typer.Option(
+                    False,
+                    "--dry-run",
+                    help="Describe actions without executing. type:bool",
+                ),
+                annotation=bool,
+            )
+        )
+
+    wrapper.__signature__ = sig.replace(parameters=new_params)  # type: ignore[attr-defined]
+    return wrapper

@@ -37,6 +37,11 @@ def validate(
         "--bin",
         help="Name or path of the CLI binary to validate. type:string",
     ),
+    deep: bool = typer.Option(
+        False,
+        "--deep",
+        help="Run the tool and verify behavior (requires --bin). type:bool",
+    ),
     output: OutputFormat = typer.Option(
         OutputFormat.text, "--output", help="Output format. type:enum[text|json|table]"
     ),
@@ -46,10 +51,17 @@ def validate(
     Runs the target tool's introspect command and checks compliance with
     the ACLI spec: help structure, examples, output format, exit codes,
     dry-run support, and idempotency declarations.
+
+    Use --deep to actually run commands and verify JSON output and error
+    envelopes (requires --bin).
     """
     tree = _load_tree(bin_name)
     tool_name = bin_name or tree.get("name", "unknown")
     results = _validate_tree(tree)
+
+    if deep and bin_name:
+        results.extend(_deep_validate(bin_name, tree))
+
     _emit_results(results, tool_name, output)
 
 
@@ -325,6 +337,120 @@ def _validate_tree(tree: dict[str, Any]) -> list[dict[str, Any]]:
                 "spec": "§1.1",
                 "level": "SHOULD",
                 "pass": has_see_also,
+            }
+        )
+
+    return results
+
+
+def _deep_validate(bin_name: str, tree: dict[str, Any]) -> list[dict[str, Any]]:
+    """Run the tool and verify actual behavior against the spec."""
+    results: list[dict[str, Any]] = []
+    commands = tree.get("commands", [])
+    builtin = ("introspect", "version", "skill")
+    user_commands = [c for c in commands if c.get("name") not in builtin]
+
+    # §2.1 — verify --help includes expected sections
+    try:
+        help_result = subprocess.run(  # noqa: S603
+            [bin_name, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        help_text = help_result.stdout
+        results.append(
+            {
+                "check": "top-level --help runs successfully",
+                "spec": "§1.1",
+                "level": "MUST",
+                "pass": help_result.returncode == 0 and len(help_text) > 0,
+            }
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        results.append(
+            {
+                "check": "top-level --help runs successfully",
+                "spec": "§1.1",
+                "level": "MUST",
+                "pass": False,
+            }
+        )
+
+    # §2.2 — verify JSON error envelope on bad input
+    for cmd in user_commands[:2]:  # Test first 2 user commands to avoid slow runs
+        cmd_name = cmd.get("name", "unknown")
+        try:
+            err_result = subprocess.run(  # noqa: S603
+                [bin_name, cmd_name, "--output", "json", "--bad-flag-xyz"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+            is_json_error = False
+            if err_result.returncode != 0:
+                try:
+                    envelope = json.loads(err_result.stdout or err_result.stderr)
+                    is_json_error = (
+                        envelope.get("ok") is False
+                        and "error" in envelope
+                        and "code" in envelope.get("error", {})
+                    )
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            results.append(
+                {
+                    "check": f"{cmd_name}: JSON error envelope on bad input",
+                    "spec": "§2.2",
+                    "level": "MUST",
+                    "pass": is_json_error,
+                }
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            results.append(
+                {
+                    "check": f"{cmd_name}: JSON error envelope on bad input",
+                    "spec": "§2.2",
+                    "level": "MUST",
+                    "pass": False,
+                }
+            )
+
+    # §7.1 — verify version --output json returns valid envelope
+    try:
+        ver_result = subprocess.run(  # noqa: S603
+            [bin_name, "version", "--output", "json"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        valid_version = False
+        if ver_result.returncode == 0:
+            try:
+                envelope = json.loads(ver_result.stdout)
+                valid_version = envelope.get("ok") is True and "version" in envelope.get(
+                    "data", {}
+                )
+            except (json.JSONDecodeError, TypeError):
+                pass
+        results.append(
+            {
+                "check": "version --output json returns valid envelope",
+                "spec": "§7.1",
+                "level": "MUST",
+                "pass": valid_version,
+            }
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        results.append(
+            {
+                "check": "version --output json returns valid envelope",
+                "spec": "§7.1",
+                "level": "MUST",
+                "pass": False,
             }
         )
 

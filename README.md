@@ -29,7 +29,7 @@ pip install acli-spec
 ```
 
 ```python
-from acli import ACLIApp, acli_command, OutputFormat
+from acli import ACLIApp, OutputFormat, acli_command, emit, success_envelope
 import typer
 
 app = ACLIApp(name="weather", version="1.0.0")
@@ -44,16 +44,16 @@ app = ACLIApp(name="weather", version="1.0.0")
 )
 def get(
     city: str = typer.Option(..., help="City name. type:string"),
-    output: OutputFormat = typer.Option(OutputFormat.text),
 ) -> None:
     """Get current weather for a city."""
-    from acli import emit, success_envelope
     data = {"city": city, "temperature_c": 18.5, "condition": "sunny"}
-    emit(success_envelope("get", data, version="1.0.0"), output)
+    emit(success_envelope("get", data, version="1.0.0"), OutputFormat.text)
 
 if __name__ == "__main__":
     app.run()
 ```
+
+Note: `--output` is **auto-injected** — no need to declare it. `--dry-run` is also auto-injected on non-idempotent commands.
 
 You automatically get:
 
@@ -62,15 +62,17 @@ You automatically get:
 - `weather version` — semver output with `--output json`
 - `.cli/` folder with README, examples, and schemas
 - JSON error envelopes with actionable hints and semantic exit codes (0–9)
+- NDJSON streaming via `emit_progress()` / `emit_result()` for long-running commands
 
 See the full [weather example](https://alpibrusl.github.io/acli/example/) for a complete walkthrough.
 
 ## The `acli` CLI
 
 ```bash
-acli validate --bin weather     # Validate against the spec
-acli skill --bin weather        # Generate SKILLS.md from the tool
-acli init --name myapp          # Scaffold a new ACLI project
+acli validate --bin weather         # Validate against the spec
+acli validate --bin weather --deep  # Deep validation (runs tool, checks envelopes)
+acli skill --bin weather            # Generate SKILLS.md from the tool
+acli init --name myapp              # Scaffold a new ACLI project
 ```
 
 ## Specification

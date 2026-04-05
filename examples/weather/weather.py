@@ -2,14 +2,17 @@
 """weather — an ACLI-compliant weather CLI for agent consumption.
 
 A complete example showing how to build an agent-friendly CLI tool
-using the ACLI Python SDK. Agents can discover this tool's capabilities
-by running `weather --help`, `weather introspect`, or reading `.cli/README.md`.
+using the ACLI Python SDK. Demonstrates:
+- Auto-injected --output (no need to declare it on every command)
+- Auto-injected --dry-run on non-idempotent commands
+- NDJSON streaming for long-running operations
+- Actionable error messages with hints
+- Semantic exit codes
 """
 
 from __future__ import annotations
 
 import random
-import sys
 import time
 from typing import Any
 
@@ -17,14 +20,14 @@ import typer
 
 from acli import (
     ACLIApp,
-    ConflictError,
     ExitCode,
     InvalidArgsError,
     NotFoundError,
     OutputFormat,
     acli_command,
     emit,
-    error_envelope,
+    emit_progress,
+    emit_result,
     success_envelope,
 )
 
@@ -63,6 +66,8 @@ def _get_weather(city: str) -> dict[str, Any]:
 
 
 # ── Commands ──────────────────────────────────────────────────────────────────
+# Note: --output is auto-injected by @acli_command — no need to declare it.
+# Note: --dry-run is auto-injected on idempotent=False commands.
 
 
 @app.command()
@@ -222,6 +227,40 @@ def favorite(
 
     data = {"city": city, "favorites": FAVORITES}
     emit(success_envelope("favorite", data, version="1.0.0", start_time=start), output)
+
+
+@app.command()
+@acli_command(
+    examples=[
+        ("Refresh all cities", "weather refresh"),
+        ("Refresh specific cities", "weather refresh --cities london,paris"),
+    ],
+    idempotent=False,
+    see_also=["get", "forecast"],
+)
+def refresh(
+    cities: str = typer.Option(
+        "", help="Comma-separated city names to refresh (default: all). type:string"
+    ),
+) -> None:
+    """Refresh cached weather data for cities.
+
+    Demonstrates NDJSON streaming for long-running operations.
+    The --dry-run flag is auto-injected because idempotent=False.
+    The --output flag is auto-injected by @acli_command.
+    """
+    target_cities = [c.strip() for c in cities.split(",") if c.strip()] if cities else list(CITIES)
+
+    for c in target_cities:
+        if c not in CITIES:
+            raise NotFoundError(f"Unknown city: '{c}'")
+
+    # Stream progress as NDJSON
+    for c in target_cities:
+        emit_progress("refresh", "running", detail=f"Fetching data for {c}")
+        time.sleep(0.01)  # Simulated work
+
+    emit_result({"cities_refreshed": target_cities, "count": len(target_cities)})
 
 
 def main() -> None:
