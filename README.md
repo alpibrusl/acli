@@ -91,8 +91,8 @@ The full spec is in [`ACLI_SPEC.md`](ACLI_SPEC.md). Key concepts:
 | Language | Status | Package |
 |----------|--------|---------|
 | Python   | Available | [`acli-spec`](https://pypi.org/project/acli-spec/) |
+| Rust     | Available | [`acli`](https://crates.io/crates/acli) (wraps clap) |
 | Go       | Planned  | — |
-| Rust     | Planned  | — |
 | Node.js  | Planned  | — |
 
 ## Documentation
