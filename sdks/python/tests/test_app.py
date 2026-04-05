@@ -96,6 +96,7 @@ class TestACLIApp:
 
         parsed = json.loads(output)
         assert parsed["ok"] is False
+        assert parsed["command"] == "t"
         assert parsed["error"]["code"] == "INVALID_ARGS"
         assert parsed["error"]["hint"] == "fix it"
 
@@ -124,6 +125,7 @@ class TestACLIApp:
 
         parsed = json.loads(output)
         assert parsed["ok"] is False
+        assert parsed["command"] == "t"
         assert "oh no" in parsed["error"]["message"]
 
     def test_add_typer(self, tmp_path: Path) -> None:
@@ -196,6 +198,65 @@ class TestACLIAppIntrospect:
             sys.stdout = old_stdout
 
         assert "acli 0.1.0" in output
+
+
+class TestACLIAppSkill:
+    def test_skill_stdout(self, tmp_path: Path) -> None:
+        app = _make_app(tmp_path)
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            with patch("sys.argv", ["testcli", "skill"]):
+                try:
+                    app.run()
+                except SystemExit:
+                    pass
+            output = sys.stdout.getvalue()
+        finally:
+            sys.stdout = old_stdout
+
+        assert "# testcli" in output
+        assert "## Available commands" in output
+
+    def test_skill_json(self, tmp_path: Path) -> None:
+        app = _make_app(tmp_path)
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            with patch("sys.argv", ["testcli", "skill", "--output", "json"]):
+                try:
+                    app.run()
+                except SystemExit:
+                    pass
+            output = sys.stdout.getvalue()
+        finally:
+            sys.stdout = old_stdout
+
+        parsed = json.loads(output)
+        assert parsed["ok"] is True
+        assert "# testcli" in parsed["data"]["content"]
+
+    def test_skill_to_file(self, tmp_path: Path) -> None:
+        app = _make_app(tmp_path)
+        out_file = tmp_path / "SKILLS.md"
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            with patch("sys.argv", ["testcli", "skill", "--out", str(out_file)]):
+                try:
+                    app.run()
+                except SystemExit:
+                    pass
+            output = sys.stdout.getvalue()
+        finally:
+            sys.stdout = old_stdout
+
+        assert out_file.exists()
+        assert "# testcli" in out_file.read_text()
+        assert "Skill file written to" in output
 
 
 class TestACLIAppVersion:

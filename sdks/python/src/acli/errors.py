@@ -17,11 +17,13 @@ class ACLIError(Exception):
         code: ExitCode = ExitCode.GENERAL_ERROR,
         hint: str | None = None,
         docs: str | None = None,
+        command: str | None = None,
     ) -> None:
         super().__init__(message)
         self.code = code
         self.hint = hint
         self.docs = docs
+        self.command = command
 
 
 class InvalidArgsError(ACLIError):

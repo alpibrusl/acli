@@ -1,5 +1,5 @@
-site_name: ACLI
-site_description: Agent-friendly CLI specification and SDKs
+site_name: ACLI — Agent-friendly CLI
+site_description: "ACLI is a specification and SDK for building CLI tools that AI agents can discover, learn, and use autonomously — without MCP servers or external schemas."
 site_url: https://alpibrusl.github.io/acli
 repo_url: https://github.com/alpibrusl/acli
 repo_name: alpibrusl/acli
@@ -27,12 +27,16 @@ theme:
     - navigation.sections
     - navigation.expand
     - navigation.top
+    - navigation.indexes
     - content.code.copy
     - content.code.annotate
     - search.suggest
     - search.highlight
   icon:
     repo: fontawesome/brands/github
+
+plugins:
+  - search
 
 markdown_extensions:
   - admonition
@@ -46,13 +50,16 @@ markdown_extensions:
   - pymdownx.snippets
   - attr_list
   - md_in_html
+  - meta
   - toc:
       permalink: true
 
 nav:
   - Home: index.md
+  - "Example: Weather CLI": example.md
   - Specification:
       - Overview: spec/index.md
+      - "Why ACLI? MCP → Skills → CLI": spec/evolution.md
       - Progressive Discovery: spec/discovery.md
       - Output Contracts: spec/output.md
       - Exit Codes: spec/exit-codes.md
@@ -66,9 +73,12 @@ nav:
       - Output & Envelopes: python-sdk/output.md
       - Errors: python-sdk/errors.md
       - Introspection: python-sdk/introspection.md
+      - Skill Files & acli CLI: python-sdk/skill.md
   - Contributing: contributing.md
 
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/alpibrusl/acli
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/acli-spec/

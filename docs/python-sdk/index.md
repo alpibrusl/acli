@@ -1,3 +1,8 @@
+---
+title: ACLI Python SDK — Getting Started
+description: Build agent-friendly CLI tools in Python with the acli-spec package. Wraps Typer with automatic introspection, JSON envelopes, and semantic exit codes.
+---
+
 # Python SDK — Getting Started
 
 The `acli-spec` package wraps [Typer](https://typer.tiangolo.com/) to automatically enforce the ACLI specification.

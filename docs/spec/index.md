@@ -8,6 +8,7 @@ The ACLI specification defines how CLI tools should be designed so that AI agent
 
 | Section | What it covers |
 |---------|---------------|
+| [Why ACLI? MCP → Skills → CLI](evolution.md) | How agent tool integration evolved and where ACLI fits |
 | [Progressive Discovery](discovery.md) | `--help` structure, `introspect` command, `.cli/` folder |
 | [Output Contracts](output.md) | `--output` flag, JSON envelope, streaming |
 | [Exit Codes](exit-codes.md) | Semantic exit codes 0–9 |
@@ -23,4 +24,4 @@ SKILLS.md     → instructions written by humans, loaded into context
 <cli> --help  → tool teaches itself to the agent on demand (Progressive Skills)
 ```
 
-ACLI targets the third stage — tools that are self-describing enough for agents to use without prior configuration.
+ACLI targets the third stage — tools that are self-describing enough for agents to use without prior configuration. See the [full comparison](evolution.md) for a deep dive into the trade-offs between each approach.
