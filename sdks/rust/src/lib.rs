@@ -6,33 +6,60 @@
 //! # Quick Start
 //!
 //! ```rust
-//! use acli::introspect::{CommandTree, CommandInfo};
-//! use acli::output::{OutputFormat, success_envelope, emit};
+//! use acli::app::AcliApp;
+//! use acli::command::{AcliCommand, CommandMeta, Idempotency, examples};
+//! use acli::acli_args;
+//! use acli::{OutputFormat, success_envelope, emit};
 //! use serde_json::json;
 //!
-//! let mut tree = CommandTree::new("myapp", "1.0.0");
-//! tree.add_command(
-//!     CommandInfo::new("hello", "Greet someone")
-//!         .idempotent(true)
-//!         .with_examples(vec![
-//!             ("Greet world", "myapp hello --name world"),
-//!             ("Greet formally", "myapp hello --name world --formal"),
-//!         ])
-//!         .add_option("name", "string", "Who to greet", None)
-//! );
+//! // Define args with auto-injected --output
+//! acli_args! {
+//!     pub struct GetArgs {
+//!         #[arg(long)]
+//!         pub city: String,
+//!     }
+//! }
 //!
-//! let envelope = success_envelope("hello", json!({"greeting": "Hello!"}), "1.0.0", None);
+//! // Implement AcliCommand trait for metadata
+//! impl AcliCommand for GetArgs {
+//!     fn name() -> &'static str { "get" }
+//!     fn description() -> &'static str { "Get current weather" }
+//!     fn meta() -> CommandMeta {
+//!         CommandMeta {
+//!             examples: examples(&[
+//!                 ("Get London weather", "weather get --city london"),
+//!                 ("Get Tokyo in JSON", "weather get --city tokyo --output json"),
+//!             ]),
+//!             idempotent: Idempotency::Yes,
+//!             see_also: vec!["forecast".into()],
+//!         }
+//!     }
+//! }
+//!
+//! // Build app and register commands
+//! let mut app = AcliApp::new("weather", "1.0.0");
+//! app.register::<GetArgs>();
+//!
+//! // Emit structured output
+//! let data = json!({"city": "london", "temp": 18.5});
+//! let envelope = success_envelope("get", data, "1.0.0", None);
 //! emit(&envelope, &OutputFormat::Json);
 //! ```
 
+pub mod app;
 pub mod cli_folder;
+pub mod command;
 pub mod errors;
 pub mod exit_codes;
 pub mod introspect;
+#[macro_use]
+pub mod macros;
 pub mod output;
 pub mod skill;
 
 // Re-export key types at crate root
+pub use app::AcliApp;
+pub use command::{AcliCommand, CommandMeta, Idempotency};
 pub use errors::AcliError;
 pub use exit_codes::ExitCode;
 pub use introspect::{CommandInfo, CommandTree};

@@ -1,4 +1,7 @@
+use acli::acli_args;
+use acli::app::AcliApp;
 use acli::cli_folder::{generate_cli_folder, needs_update};
+use acli::command::{examples, AcliCommand, CommandMeta, Idempotency};
 use acli::errors::{invalid_args, not_found, suggest_flag, AcliError};
 use acli::exit_codes::ExitCode;
 use acli::introspect::{CommandInfo, CommandTree};
@@ -324,4 +327,130 @@ fn test_skill_excludes_builtins() {
     assert!(!available.contains("`noether introspect`"));
     assert!(!available.contains("`noether version`"));
     assert!(available.contains("`noether run`"));
+}
+
+// ── AcliApp ──────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_acli_app_new() {
+    let app = AcliApp::new("myapp", "1.0.0");
+    assert_eq!(app.name, "myapp");
+    assert_eq!(app.version, "1.0.0");
+}
+
+#[test]
+fn test_acli_app_register_command() {
+    let mut app = AcliApp::new("myapp", "1.0.0");
+    app.register_command(
+        CommandInfo::new("hello", "Say hello")
+            .idempotent(true)
+            .with_examples(vec![
+                ("Greet", "myapp hello --name world"),
+                ("Formal", "myapp hello --formal"),
+            ]),
+    );
+    assert_eq!(app.command_tree().commands.len(), 1);
+    assert_eq!(app.command_tree().commands[0].name, "hello");
+}
+
+#[test]
+fn test_acli_app_run_success() {
+    let app = AcliApp::new("myapp", "1.0.0");
+    let code = app.run(|| Ok(()));
+    assert_eq!(code, ExitCode::Success);
+}
+
+#[test]
+fn test_acli_app_run_error() {
+    let app = AcliApp::new("myapp", "1.0.0");
+    let code = app.run(|| Err(not_found("resource gone").with_hint("check id")));
+    assert_eq!(code, ExitCode::NotFound);
+}
+
+// ── AcliCommand Trait ────────────────────────────────────────────────────────
+
+acli_args! {
+    pub struct TestGetArgs {
+        #[arg(long)]
+        pub city: String,
+    }
+}
+
+impl AcliCommand for TestGetArgs {
+    fn name() -> &'static str {
+        "get"
+    }
+    fn description() -> &'static str {
+        "Get weather"
+    }
+    fn meta() -> CommandMeta {
+        CommandMeta {
+            examples: examples(&[
+                ("Get London", "weather get --city london"),
+                ("Get Tokyo", "weather get --city tokyo"),
+            ]),
+            idempotent: Idempotency::Yes,
+            see_also: vec!["forecast".into()],
+        }
+    }
+}
+
+#[test]
+fn test_acli_command_trait() {
+    let info = TestGetArgs::command_info();
+    assert_eq!(info.name, "get");
+    assert_eq!(info.description, "Get weather");
+    assert_eq!(info.idempotent, Some(json!(true)));
+    assert_eq!(info.examples.as_ref().unwrap().len(), 2);
+    assert_eq!(info.see_also.as_ref().unwrap(), &vec!["forecast"]);
+}
+
+#[test]
+fn test_acli_command_register_via_trait() {
+    let mut app = AcliApp::new("weather", "1.0.0");
+    app.register::<TestGetArgs>();
+    assert_eq!(app.command_tree().commands.len(), 1);
+    assert_eq!(app.command_tree().commands[0].name, "get");
+}
+
+// ── acli_args! Macro ─────────────────────────────────────────────────────────
+
+#[test]
+fn test_acli_args_has_output_field() {
+    // TestGetArgs was defined above with acli_args! — verify output field exists
+    let args = TestGetArgs {
+        city: "london".into(),
+        output: OutputFormat::Json,
+    };
+    assert_eq!(args.output, OutputFormat::Json);
+}
+
+acli_args! {
+    pub struct TestDeployArgs {
+        #[arg(long)]
+        pub target: String,
+    } with dry_run
+}
+
+#[test]
+fn test_acli_args_with_dry_run() {
+    let args = TestDeployArgs {
+        target: "staging".into(),
+        output: OutputFormat::Text,
+        dry_run: true,
+    };
+    assert!(args.dry_run);
+    assert_eq!(args.output, OutputFormat::Text);
+}
+
+// ── Idempotency ──────────────────────────────────────────────────────────────
+
+#[test]
+fn test_idempotency_values() {
+    assert_eq!(Idempotency::Yes.to_json_value(), json!(true));
+    assert_eq!(Idempotency::No.to_json_value(), json!(false));
+    assert_eq!(
+        Idempotency::Conditional.to_json_value(),
+        json!("conditional")
+    );
 }
