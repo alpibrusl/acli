@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "acli-spec"
-version = "0.1.0"
+version = "0.1.4"
 description = "Python SDK for the ACLI (Agent-friendly CLI) specification"
 readme = "README.md"
 license = "EUPL-1.2"
@@ -46,9 +46,6 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/acli"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"src/acli/templates" = "acli/templates"
 
 # ── Ruff ──────────────────────────────────────────────────────────────────────
 
