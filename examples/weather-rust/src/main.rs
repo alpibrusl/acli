@@ -228,7 +228,7 @@ fn run_get(app: &AcliApp, args: GetArgs) -> ExitCode {
     if args.units == "imperial" {
         data = add_imperial(data);
     }
-    let envelope = success_envelope("get", data, &app.version, Some(start));
+    let envelope = success_envelope("get", data, &app.version, Some(start), None);
     emit(&envelope, &args.output);
     ExitCode::Success
 }
@@ -246,7 +246,7 @@ fn run_forecast(app: &AcliApp, args: ForecastArgs) -> ExitCode {
         return app.handle_error(&e);
     }
     let data = forecast(&city, args.days);
-    let envelope = success_envelope("forecast", data, &app.version, Some(start));
+    let envelope = success_envelope("forecast", data, &app.version, Some(start), None);
     emit(&envelope, &args.output);
     ExitCode::Success
 }
@@ -264,7 +264,7 @@ fn run_alerts(app: &AcliApp, args: AlertsArgs) -> ExitCode {
         Some(c)
     };
     let data = alerts_json(filter.as_deref());
-    let envelope = success_envelope("alerts", data, &app.version, Some(start));
+    let envelope = success_envelope("alerts", data, &app.version, Some(start), None);
     emit(&envelope, &args.output);
     ExitCode::Success
 }
@@ -283,14 +283,14 @@ fn run_favorite(app: &AcliApp, args: FavoriteArgs) -> ExitCode {
             "reversible": true,
             "already_exists": has_favorite(&city),
         })];
-        let envelope = dry_run_envelope("favorite", planned, &app.version, Some(start));
+        let envelope = dry_run_envelope("favorite", planned, &app.version, Some(start), None);
         emit(&envelope, &args.output);
         return ExitCode::DryRun;
     }
 
     ensure_favorite(&city);
     let data = favorites_json(&city);
-    let envelope = success_envelope("favorite", data, &app.version, Some(start));
+    let envelope = success_envelope("favorite", data, &app.version, Some(start), None);
     emit(&envelope, &args.output);
     ExitCode::Success
 }

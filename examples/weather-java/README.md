@@ -18,7 +18,7 @@ mvn -q exec:java -Dexec.args="get --city london --output json"
 mvn -q exec:java -Dexec.args="introspect --output json"
 ```
 
-After `mvn package`, run with `java -cp ...` including `target/classes`, `../../sdks/java/target/acli-spec-0.3.0.jar`, and Picocli/Jackson from Maven dependencies, or use `exec:java` as above.
+After `mvn package`, run with `java -cp ...` including `target/classes`, `../../sdks/java/target/acli-spec-0.4.0.jar`, and Picocli/Jackson from Maven dependencies, or use `exec:java` as above.
 
 ## License
 

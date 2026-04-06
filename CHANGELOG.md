@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-06
+
+### Added
+
+- **Spec**: optional `meta.cache`, `error.hints`, introspection `since_version` / `deprecated_since` (see `ACLI_SPEC.md`).
+- **Python & Rust SDKs**: implement the above (envelopes, introspect param metadata).
+- **Monorepo**: Go, .NET, R, and Java SDKs; weather examples (Rust, TypeScript); Java weather example — merged to `develop`.
+
+### Changed (breaking)
+
+- **Rust**: `success_envelope` and `error_envelope` / `error_envelope_raw` signatures extended (`cache`, `hints` parameters).
+
 ## [0.3.0] - 2026-04-05
 
 ### Added
@@ -69,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI pipeline with Python 3.10–3.13 matrix
 - Release pipeline with PyPI Trusted Publishing
 
-[Unreleased]: https://github.com/alpibrusl/acli/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/alpibrusl/acli/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/alpibrusl/acli/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/alpibrusl/acli/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/alpibrusl/acli/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/alpibrusl/acli/compare/v0.1.1...v0.1.4

@@ -15,7 +15,7 @@ Build CLI tools that agents can discover via `--help` and `introspect`. Uses [Pi
 <dependency>
     <groupId>dev.acli</groupId>
     <artifactId>acli-spec</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 

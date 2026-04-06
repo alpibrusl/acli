@@ -142,7 +142,8 @@ jobs:
 
   github-release:
     name: Create GitHub Release
-    needs: [publish-pypi, publish-npm, publish-crates]
+    # Do not require npm: allows PyPI + crates.io release if NPM_TOKEN is unset or npm fails.
+    needs: [publish-pypi, publish-crates]
     runs-on: ubuntu-latest
     permissions:
       contents: write
