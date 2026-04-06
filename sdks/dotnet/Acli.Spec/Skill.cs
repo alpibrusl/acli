@@ -1,0 +1,122 @@
+using System.Linq;
+using System.Text;
+
+namespace Acli;
+
+public static class Skill
+{
+    static readonly HashSet<string> Builtin = new() { "introspect", "version", "skill" };
+
+    public static string Generate(CommandTree tree, string? path)
+    {
+        var name = tree.Name;
+        var ver = tree.Version;
+        var b = new StringBuilder();
+        b.AppendLine($"# {name}");
+        b.AppendLine();
+        b.AppendLine($"> Auto-generated skill file for `{name}` v{ver}");
+        b.AppendLine($"> Re-generate with: `{name} skill` or `acli skill --bin {name}`");
+        b.AppendLine();
+        b.AppendLine("## Available commands");
+        b.AppendLine();
+        foreach (var cmd in tree.Commands.Where(c => !Builtin.Contains(c.Name)))
+        {
+            var tag = IdemTag(cmd);
+            b.AppendLine($"- `{name} {cmd.Name}` — {cmd.Description}{tag}");
+        }
+        b.AppendLine();
+        foreach (var cmd in tree.Commands.Where(c => !Builtin.Contains(c.Name)))
+        {
+            b.AppendLine($"## `{name} {cmd.Name}`");
+            b.AppendLine();
+            if (!string.IsNullOrEmpty(cmd.Description))
+            {
+                b.AppendLine(cmd.Description);
+                b.AppendLine();
+            }
+            if (cmd.Options.Count > 0)
+            {
+                b.AppendLine("### Options");
+                b.AppendLine();
+                foreach (var o in cmd.Options)
+                {
+                    var def = o.Default != null ? $" [default: {o.Default}]" : "";
+                    var on = o.Name.Replace("_", "-");
+                    b.AppendLine($"- `--{on}` ({o.Type}) — {o.Description}{def}");
+                }
+                b.AppendLine();
+            }
+            if (cmd.Arguments.Count > 0)
+            {
+                b.AppendLine("### Arguments");
+                b.AppendLine();
+                foreach (var a in cmd.Arguments)
+                {
+                    var req = a.Required == true ? "required" : "optional";
+                    b.AppendLine($"- `{a.Name}` ({a.Type}, {req}) — {a.Description}");
+                }
+                b.AppendLine();
+            }
+            if (cmd.Examples is { Count: > 0 })
+            {
+                b.AppendLine("### Examples");
+                b.AppendLine();
+                foreach (var ex in cmd.Examples)
+                {
+                    b.AppendLine("```bash");
+                    b.AppendLine($"# {ex.Description}");
+                    b.AppendLine(ex.Invocation);
+                    b.AppendLine("```");
+                    b.AppendLine();
+                }
+            }
+            if (cmd.SeeAlso is { Count: > 0 })
+            {
+                var refs = string.Join(", ", cmd.SeeAlso.Select(s => $"`{name} {s}`"));
+                b.AppendLine($"**See also:** {refs}");
+                b.AppendLine();
+            }
+        }
+        b.AppendLine("## Output format");
+        b.AppendLine();
+        b.AppendLine("All commands support `--output json|text|table`. When using `--output json`, responses follow a standard envelope:");
+        b.AppendLine();
+        b.AppendLine("```json");
+        b.AppendLine(@"{""ok"": true, ""command"": ""..."", ""data"": {...}, ""meta"": {""duration_ms"": ..., ""version"": ""...""}}");
+        b.AppendLine("```");
+        b.AppendLine();
+        b.AppendLine("## Exit codes");
+        b.AppendLine();
+        b.AppendLine("| Code | Meaning | Action |");
+        b.AppendLine("|------|---------|--------|");
+        b.AppendLine("| 0 | Success | Proceed |");
+        b.AppendLine("| 2 | Invalid arguments | Correct and retry |");
+        b.AppendLine("| 3 | Not found | Check inputs |");
+        b.AppendLine("| 5 | Conflict | Resolve conflict |");
+        b.AppendLine("| 8 | Precondition failed | Fix precondition |");
+        b.AppendLine("| 9 | Dry-run completed | Review and confirm |");
+        b.AppendLine();
+        b.AppendLine("## Further discovery");
+        b.AppendLine();
+        b.AppendLine($"- `{name} --help` — full help for any command");
+        b.AppendLine($"- `{name} introspect` — machine-readable command tree (JSON)");
+        b.AppendLine("- `.cli/README.md` — persistent reference (survives context resets)");
+        b.AppendLine();
+        var content = b.ToString();
+        if (!string.IsNullOrEmpty(path))
+        {
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+            File.WriteAllText(path, content);
+        }
+        return content;
+    }
+
+    static string IdemTag(CommandInfo cmd)
+    {
+        if (cmd.Idempotent is bool b && b) return " (idempotent)";
+        if (cmd.Idempotent is string s && s == "conditional") return " (conditionally idempotent)";
+        return "";
+    }
+}

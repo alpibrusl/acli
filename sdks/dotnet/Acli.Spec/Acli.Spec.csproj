@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Acli</RootNamespace>
+    <AssemblyName>Acli.Spec</AssemblyName>
+    <Version>0.3.0</Version>
+    <PackageId>Acli.Spec</PackageId>
+    <Description>.NET SDK for the ACLI (Agent-friendly CLI) specification</Description>
+    <Authors>ACLI Contributors</Authors>
+    <PackageLicenseExpression>EUPL-1.2</PackageLicenseExpression>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+</Project>
