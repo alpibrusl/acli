@@ -21,12 +21,21 @@ class CommandExample:
 
 
 @dataclasses.dataclass(frozen=True)
+class ParamVersionMeta:
+    """Optional lifecycle metadata for a parameter (ACLI spec §1.2)."""
+
+    since_version: str | None = None
+    deprecated_since: str | None = None
+
+
+@dataclasses.dataclass(frozen=True)
 class CommandMeta:
     """Metadata attached to a command by @acli_command."""
 
     examples: tuple[CommandExample, ...]
     idempotent: bool | str  # True, False, or "conditional"
     see_also: tuple[str, ...]
+    param_meta: tuple[tuple[str, ParamVersionMeta], ...] = ()
 
 
 ACLI_META_ATTR = "_acli_meta"
@@ -37,6 +46,7 @@ def acli_command(
     examples: list[tuple[str, str]],
     idempotent: bool | str = False,
     see_also: list[str] | None = None,
+    param_meta: dict[str, ParamVersionMeta] | None = None,
 ) -> Any:
     """Decorator that attaches ACLI metadata to a Typer command function.
 
@@ -47,6 +57,8 @@ def acli_command(
         examples: List of (description, invocation) tuples. At least 2 required per spec.
         idempotent: Whether the command is idempotent (True/False/"conditional").
         see_also: Related command names for the SEE ALSO section.
+        param_meta: Map of Python parameter names to ``since_version`` /
+            ``deprecated_since`` for introspection (optional).
     """
     if len(examples) < 2:
         msg = "ACLI spec requires at least 2 examples per command"
@@ -57,10 +69,12 @@ def acli_command(
         raise ValueError(msg)
 
     parsed = tuple(CommandExample(desc, inv) for desc, inv in examples)
+    pm = tuple((k, v) for k, v in sorted((param_meta or {}).items()))
     meta = CommandMeta(
         examples=parsed,
         idempotent=idempotent,
         see_also=tuple(see_also or []),
+        param_meta=pm,
     )
 
     def decorator(func: Any) -> Any:

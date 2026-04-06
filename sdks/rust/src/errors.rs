@@ -8,6 +8,7 @@ pub struct AcliError {
     pub message: String,
     pub code: ExitCode,
     pub hint: Option<String>,
+    pub hints: Option<Vec<String>>,
     pub docs: Option<String>,
     pub command: Option<String>,
 }
@@ -19,6 +20,7 @@ impl AcliError {
             message: message.into(),
             code: ExitCode::GeneralError,
             hint: None,
+            hints: None,
             docs: None,
             command: None,
         }
@@ -33,6 +35,12 @@ impl AcliError {
     /// Set the hint.
     pub fn with_hint(mut self, hint: impl Into<String>) -> Self {
         self.hint = Some(hint.into());
+        self
+    }
+
+    /// Set additional structured hints (ACLI `error.hints`).
+    pub fn with_hints(mut self, hints: Vec<String>) -> Self {
+        self.hints = Some(hints);
         self
     }
 

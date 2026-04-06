@@ -6,7 +6,7 @@ from pathlib import Path
 
 import typer
 
-from acli.command import acli_command
+from acli.command import ParamVersionMeta, acli_command
 from acli.introspect import build_command_tree
 from acli.output import OutputFormat
 
@@ -23,6 +23,9 @@ def _make_app() -> typer.Typer:
         ],
         idempotent=False,
         see_also=["status"],
+        param_meta={
+            "env": ParamVersionMeta(since_version="0.2.0"),
+        },
     )
     def run(
         pipeline: Path = typer.Option(..., help="Path to pipeline file. type:path"),
@@ -76,6 +79,7 @@ class TestBuildCommandTree:
         run_cmd = next(c for c in tree["commands"] if c["name"] == "run")
         env_opt = next(o for o in run_cmd["options"] if o["name"] == "env")
         assert env_opt["default"] == "dev"
+        assert env_opt["since_version"] == "0.2.0"
 
     def test_command_without_meta(self) -> None:
         app = _make_app()

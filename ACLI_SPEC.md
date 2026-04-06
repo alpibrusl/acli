@@ -94,6 +94,11 @@ This command outputs the full command tree as JSON:
 }
 ```
 
+Each entry in `arguments` and `options` MAY include optional lifecycle fields so agents can detect stale cached introspection:
+
+- `since_version` (string): tool version in which this parameter was added (semver or project convention).
+- `deprecated_since` (string): version after which the parameter is deprecated; tools SHOULD document removal in `.cli/changelog.md`.
+
 This is the machine-readable complement to `--help`. Agents should prefer `introspect` for initial capability mapping and `--help` for contextual guidance on a specific command.
 
 ### 1.3 `.cli/` reference folder
@@ -151,10 +156,23 @@ All JSON output MUST follow this envelope:
   "data": { ... },
   "meta": {
     "duration_ms": 142,
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "cache": {
+      "hit": true,
+      "key": "sha256:abc123...",
+      "age_seconds": 3600
+    }
   }
 }
 ```
+
+The `meta.cache` object is OPTIONAL. Tools that memoize expensive work (LLM calls, network I/O, heavy computation) SHOULD populate it when the response is served from a cache. Fields:
+
+- `hit` (boolean, REQUIRED when `cache` is present): whether the primary result came from cache.
+- `key` (string, OPTIONAL): opaque cache key (e.g. hash) for debugging or forced refresh.
+- `age_seconds` (integer, OPTIONAL): age of the cached entry in seconds, if known.
+
+Tools that do not cache SHOULD omit `meta.cache` entirely.
 
 Error envelope:
 
@@ -166,6 +184,10 @@ Error envelope:
     "code": "INVALID_ARGS",
     "message": "Missing required argument: --pipeline",
     "hint": "Run `noether run --help` to see usage",
+    "hints": [
+      "Did you mean --pipeline?",
+      "Run `noether stage search` to list stages"
+    ],
     "docs": ".cli/examples/run.sh"
   },
   "meta": {
@@ -174,6 +196,8 @@ Error envelope:
   }
 }
 ```
+
+The `error.hint` field is a single short correction (OPTIONAL). The `error.hints` field is an OPTIONAL array of additional actionable strings. If both are present, consumers MAY display all entries; authors SHOULD avoid duplicating the same text in `hint` and `hints`.
 
 ### 2.3 Streaming output
 

@@ -42,7 +42,7 @@
 //!
 //! // Emit structured output
 //! let data = json!({"city": "london", "temp": 18.5});
-//! let envelope = success_envelope("get", data, "1.0.0", None);
+//! let envelope = success_envelope("get", data, "1.0.0", None, None);
 //! emit(&envelope, &OutputFormat::Json);
 //! ```
 
@@ -65,5 +65,5 @@ pub use exit_codes::ExitCode;
 pub use introspect::{CommandInfo, CommandTree};
 pub use output::{
     emit, emit_progress, emit_result, error_envelope, error_envelope_raw, success_envelope,
-    OutputFormat,
+    CacheMeta, OutputFormat,
 };

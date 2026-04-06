@@ -17,6 +17,7 @@ class TestACLIError:
         assert err.code == ExitCode.GENERAL_ERROR
         assert str(err) == "something broke"
         assert err.hint is None
+        assert err.hints is None
         assert err.docs is None
 
     def test_with_hint_and_docs(self) -> None:

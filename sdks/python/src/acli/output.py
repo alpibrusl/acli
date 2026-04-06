@@ -6,7 +6,7 @@ import json
 import sys
 import time
 from enum import Enum
-from typing import Any
+from typing import Any, TypedDict
 
 
 class OutputFormat(str, Enum):
@@ -17,6 +17,14 @@ class OutputFormat(str, Enum):
     table = "table"
 
 
+class CacheMeta(TypedDict, total=False):
+    """Optional cache metadata in success envelope ``meta.cache`` (ACLI spec §2.2)."""
+
+    hit: bool
+    key: str
+    age_seconds: int
+
+
 def success_envelope(
     command: str,
     data: dict[str, Any],
@@ -25,6 +33,7 @@ def success_envelope(
     start_time: float | None = None,
     dry_run: bool = False,
     planned_actions: list[dict[str, Any]] | None = None,
+    cache: CacheMeta | dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a success JSON envelope per ACLI spec §2.2."""
     duration_ms = int((time.time() - start_time) * 1000) if start_time else 0
@@ -38,7 +47,10 @@ def success_envelope(
             envelope["planned_actions"] = planned_actions
     else:
         envelope["data"] = data
-    envelope["meta"] = {"duration_ms": duration_ms, "version": version}
+    meta: dict[str, Any] = {"duration_ms": duration_ms, "version": version}
+    if cache:
+        meta["cache"] = dict(cache)
+    envelope["meta"] = meta
     return envelope
 
 
@@ -48,6 +60,7 @@ def error_envelope(
     code: str,
     message: str,
     hint: str | None = None,
+    hints: list[str] | None = None,
     docs: str | None = None,
     version: str,
     start_time: float | None = None,
@@ -57,6 +70,8 @@ def error_envelope(
     error: dict[str, Any] = {"code": code, "message": message}
     if hint:
         error["hint"] = hint
+    if hints:
+        error["hints"] = list(hints)
     if docs:
         error["docs"] = docs
     return {
@@ -113,6 +128,8 @@ def _emit_text(data: dict[str, Any]) -> None:
         sys.stderr.write(f"Error [{err.get('code', 'UNKNOWN')}]: {err.get('message', '')}\n")
         if hint := err.get("hint"):
             sys.stderr.write(f"  {hint}\n")
+        for line in err.get("hints") or []:
+            sys.stderr.write(f"  {line}\n")
         if docs := err.get("docs"):
             sys.stderr.write(f"  Reference: {docs}\n")
     else:

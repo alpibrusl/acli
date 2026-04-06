@@ -5,7 +5,7 @@ use acli::command::{examples, AcliCommand, CommandMeta, Idempotency};
 use acli::errors::{invalid_args, not_found, suggest_flag, AcliError};
 use acli::exit_codes::ExitCode;
 use acli::introspect::{CommandInfo, CommandTree};
-use acli::output::{error_envelope, error_envelope_raw, success_envelope, OutputFormat};
+use acli::output::{error_envelope, success_envelope, CacheMeta, OutputFormat};
 use acli::skill::generate_skill;
 use serde_json::json;
 use std::time::Instant;
@@ -56,7 +56,7 @@ fn test_output_format_display() {
 
 #[test]
 fn test_success_envelope() {
-    let env = success_envelope("run", json!({"result": 42}), "1.0.0", None);
+    let env = success_envelope("run", json!({"result": 42}), "1.0.0", None, None);
     assert!(env.ok);
     assert_eq!(env.command, "run");
     assert_eq!(env.data.unwrap()["result"], 42);
@@ -68,7 +68,7 @@ fn test_success_envelope() {
 fn test_success_envelope_with_timing() {
     let start = Instant::now();
     std::thread::sleep(std::time::Duration::from_millis(10));
-    let env = success_envelope("run", json!({}), "1.0.0", Some(start));
+    let env = success_envelope("run", json!({}), "1.0.0", Some(start), None);
     assert!(env.meta.duration_ms >= 10);
 }
 
@@ -79,6 +79,7 @@ fn test_error_envelope() {
         ExitCode::InvalidArgs,
         "Missing --pipeline",
         Some("Run `noether run --help`"),
+        None,
         Some(".cli/examples/run.sh"),
         "1.0.0",
         None,
@@ -94,10 +95,53 @@ fn test_error_envelope() {
 
 #[test]
 fn test_error_envelope_no_hint() {
-    let env = error_envelope("run", ExitCode::NotFound, "gone", None, None, "1.0.0", None);
+    let env = error_envelope(
+        "run",
+        ExitCode::NotFound,
+        "gone",
+        None,
+        None,
+        None,
+        "1.0.0",
+        None,
+    );
     let err = env.error.unwrap();
     assert!(err.hint.is_none());
+    assert!(err.hints.is_none());
     assert!(err.docs.is_none());
+}
+
+#[test]
+fn test_error_envelope_hints() {
+    let env = error_envelope(
+        "run",
+        ExitCode::NotFound,
+        "gone",
+        None,
+        Some(vec!["Try X".into(), "Try Y".into()]),
+        None,
+        "1.0.0",
+        None,
+    );
+    let err = env.error.unwrap();
+    assert_eq!(err.hints.as_ref().unwrap().len(), 2);
+}
+
+#[test]
+fn test_success_envelope_cache_meta() {
+    let cache = CacheMeta {
+        hit: true,
+        key: Some("sha256:abc".into()),
+        age_seconds: Some(3600),
+    };
+    let env = success_envelope(
+        "run",
+        json!({"x": 1}),
+        "1.0.0",
+        None,
+        Some(cache.clone()),
+    );
+    assert_eq!(env.meta.cache, Some(cache));
 }
 
 // ── Errors ───────────────────────────────────────────────────────────────────
@@ -181,6 +225,21 @@ fn test_command_with_arguments() {
     );
     assert_eq!(cmd.arguments.len(), 1);
     assert_eq!(cmd.arguments[0].required, Some(true));
+}
+
+#[test]
+fn test_option_since_version() {
+    let cmd = CommandInfo::new("compose", "Compose").add_option_with_version(
+        "force",
+        "bool",
+        "Bypass cache",
+        None,
+        Some("0.2.0"),
+        None,
+    );
+    let opt = &cmd.options[0];
+    assert_eq!(opt.since_version.as_deref(), Some("0.2.0"));
+    assert!(opt.deprecated_since.is_none());
 }
 
 #[test]

@@ -42,6 +42,10 @@ pub struct ParamInfo {
     pub default: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub required: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub since_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deprecated_since: Option<String>,
 }
 
 /// A concrete usage example.
@@ -129,6 +133,30 @@ impl CommandInfo {
             description: description.to_string(),
             default,
             required: None,
+            since_version: None,
+            deprecated_since: None,
+        });
+        self
+    }
+
+    /// Add an option with optional `since_version` / `deprecated_since` (ACLI spec §1.2).
+    pub fn add_option_with_version(
+        mut self,
+        name: &str,
+        param_type: &str,
+        description: &str,
+        default: Option<Value>,
+        since_version: Option<&str>,
+        deprecated_since: Option<&str>,
+    ) -> Self {
+        self.options.push(ParamInfo {
+            name: name.to_string(),
+            param_type: param_type.to_string(),
+            description: description.to_string(),
+            default,
+            required: None,
+            since_version: since_version.map(String::from),
+            deprecated_since: deprecated_since.map(String::from),
         });
         self
     }
@@ -147,6 +175,30 @@ impl CommandInfo {
             description: description.to_string(),
             default: None,
             required: Some(required),
+            since_version: None,
+            deprecated_since: None,
+        });
+        self
+    }
+
+    /// Add an argument with optional `since_version` / `deprecated_since` (ACLI spec §1.2).
+    pub fn add_argument_with_version(
+        mut self,
+        name: &str,
+        param_type: &str,
+        description: &str,
+        required: bool,
+        since_version: Option<&str>,
+        deprecated_since: Option<&str>,
+    ) -> Self {
+        self.arguments.push(ParamInfo {
+            name: name.to_string(),
+            param_type: param_type.to_string(),
+            description: description.to_string(),
+            default: None,
+            required: Some(required),
+            since_version: since_version.map(String::from),
+            deprecated_since: deprecated_since.map(String::from),
         });
         self
     }

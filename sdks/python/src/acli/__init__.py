@@ -1,7 +1,7 @@
 """ACLI — Agent-friendly CLI Python SDK."""
 
 from acli.app import ACLIApp
-from acli.command import CommandExample, CommandMeta, acli_command
+from acli.command import CommandExample, CommandMeta, ParamVersionMeta, acli_command
 from acli.errors import (
     ACLIError,
     ConflictError,
@@ -12,6 +12,7 @@ from acli.errors import (
 )
 from acli.exit_codes import ExitCode
 from acli.output import (
+    CacheMeta,
     OutputFormat,
     emit,
     emit_progress,
@@ -24,8 +25,10 @@ from acli.skill import generate_skill
 __all__ = [
     "ACLIApp",
     "ACLIError",
+    "CacheMeta",
     "CommandExample",
     "CommandMeta",
+    "ParamVersionMeta",
     "ConflictError",
     "ExitCode",
     "InvalidArgsError",

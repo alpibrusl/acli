@@ -73,7 +73,7 @@ impl AcliApp {
         }
 
         let tree_json = serde_json::to_value(&self.tree).unwrap_or_default();
-        let envelope = success_envelope("introspect", tree_json, &self.version, None);
+        let envelope = success_envelope("introspect", tree_json, &self.version, None, None);
         emit(&envelope, output);
     }
 
@@ -86,7 +86,7 @@ impl AcliApp {
         });
 
         if *output == OutputFormat::Json {
-            let envelope = success_envelope("version", data, &self.version, None);
+            let envelope = success_envelope("version", data, &self.version, None, None);
             emit(&envelope, output);
         } else {
             println!("{} {}", self.name, self.version);
@@ -110,7 +110,7 @@ impl AcliApp {
                 "path": out_path,
                 "content": content,
             });
-            let envelope = success_envelope("skill", data, &self.version, None);
+            let envelope = success_envelope("skill", data, &self.version, None, None);
             emit(&envelope, output);
         } else if out_path.is_some() {
             println!("Skill file written to {}", out_path.unwrap());
@@ -127,6 +127,7 @@ impl AcliApp {
             err.code,
             &err.message,
             err.hint.as_deref(),
+            err.hints.clone(),
             err.docs.as_deref(),
             &self.version,
             None,

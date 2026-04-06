@@ -65,7 +65,19 @@ pub struct ErrorDetail {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub hints: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub docs: Option<String>,
+}
+
+/// Optional cache metadata in success envelope `meta.cache` (ACLI spec §2.2).
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct CacheMeta {
+    pub hit: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub age_seconds: Option<u64>,
 }
 
 /// Metadata within the envelope.
@@ -73,6 +85,8 @@ pub struct ErrorDetail {
 pub struct Meta {
     pub duration_ms: u64,
     pub version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache: Option<CacheMeta>,
 }
 
 /// Build a success envelope.
@@ -81,6 +95,7 @@ pub fn success_envelope(
     data: Value,
     version: &str,
     start: Option<Instant>,
+    cache: Option<CacheMeta>,
 ) -> Envelope {
     let duration_ms = start.map_or(0, |s| s.elapsed().as_millis() as u64);
     Envelope {
@@ -93,6 +108,7 @@ pub fn success_envelope(
         meta: Meta {
             duration_ms,
             version: version.to_string(),
+            cache,
         },
     }
 }
@@ -103,6 +119,7 @@ pub fn dry_run_envelope(
     planned_actions: Vec<Value>,
     version: &str,
     start: Option<Instant>,
+    cache: Option<CacheMeta>,
 ) -> Envelope {
     let duration_ms = start.map_or(0, |s| s.elapsed().as_millis() as u64);
     Envelope {
@@ -115,6 +132,7 @@ pub fn dry_run_envelope(
         meta: Meta {
             duration_ms,
             version: version.to_string(),
+            cache,
         },
     }
 }
@@ -125,11 +143,12 @@ pub fn error_envelope(
     code: ExitCode,
     message: &str,
     hint: Option<&str>,
+    hints: Option<Vec<String>>,
     docs: Option<&str>,
     version: &str,
     start: Option<Instant>,
 ) -> Envelope {
-    error_envelope_raw(command, code.name(), message, hint, docs, version, start)
+    error_envelope_raw(command, code.name(), message, hint, hints, docs, version, start)
 }
 
 /// Build an error envelope from a raw code string.
@@ -138,6 +157,7 @@ pub fn error_envelope_raw(
     code: &str,
     message: &str,
     hint: Option<&str>,
+    hints: Option<Vec<String>>,
     docs: Option<&str>,
     version: &str,
     start: Option<Instant>,
@@ -153,11 +173,13 @@ pub fn error_envelope_raw(
             code: code.to_string(),
             message: message.to_string(),
             hint: hint.map(String::from),
+            hints,
             docs: docs.map(String::from),
         }),
         meta: Meta {
             duration_ms,
             version: version.to_string(),
+            cache: None,
         },
     }
 }
@@ -212,6 +234,11 @@ fn emit_text(envelope: &Envelope) {
             eprintln!("Error [{}]: {}", err.code, err.message);
             if let Some(ref hint) = err.hint {
                 eprintln!("  {hint}");
+            }
+            if let Some(ref hints) = err.hints {
+                for line in hints {
+                    eprintln!("  {line}");
+                }
             }
             if let Some(ref docs) = err.docs {
                 eprintln!("  Reference: {docs}");

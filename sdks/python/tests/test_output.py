@@ -30,6 +30,17 @@ class TestSuccessEnvelope:
         assert env["data"] == {"result": 42}
         assert env["meta"]["version"] == "1.0.0"
 
+    def test_cache_meta(self) -> None:
+        env = success_envelope(
+            "run",
+            {"x": 1},
+            version="1.0.0",
+            cache={"hit": True, "key": "sha256:abc", "age_seconds": 3600},
+        )
+        assert env["meta"]["cache"]["hit"] is True
+        assert env["meta"]["cache"]["key"] == "sha256:abc"
+        assert env["meta"]["cache"]["age_seconds"] == 3600
+
     def test_with_timing(self) -> None:
         start = time.time() - 0.1
         env = success_envelope("run", {}, version="1.0.0", start_time=start)
@@ -78,6 +89,16 @@ class TestErrorEnvelope:
         )
         assert env["error"]["hint"] == "Run `noether run --help`"
         assert env["error"]["docs"] == ".cli/examples/run.sh"
+
+    def test_hints(self) -> None:
+        env = error_envelope(
+            "run",
+            code="NOT_FOUND",
+            message="missing",
+            hints=["Try A", "Try B"],
+            version="1.0.0",
+        )
+        assert env["error"]["hints"] == ["Try A", "Try B"]
 
 
 class TestEmit:

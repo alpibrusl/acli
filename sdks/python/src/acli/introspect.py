@@ -7,7 +7,7 @@ from typing import Any, get_type_hints
 
 import typer
 
-from acli.command import ACLI_META_ATTR, CommandMeta
+from acli.command import ACLI_META_ATTR, CommandMeta, ParamVersionMeta
 
 
 def build_command_tree(app: typer.Typer, app_name: str, version: str) -> dict[str, Any]:
@@ -55,7 +55,11 @@ def _extract_command_info(command_info: Any) -> dict[str, Any] | None:
 
     meta: CommandMeta | None = getattr(callback, ACLI_META_ATTR, None)
 
-    arguments, options = _extract_params(callback)
+    param_lookup: dict[str, ParamVersionMeta] = {}
+    if meta and meta.param_meta:
+        param_lookup = dict(meta.param_meta)
+
+    arguments, options = _extract_params(callback, param_lookup)
 
     result: dict[str, Any] = {
         "name": name,
@@ -76,8 +80,21 @@ def _extract_command_info(command_info: Any) -> dict[str, Any] | None:
     return result
 
 
-def _extract_params(func: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _extract_params(
+    func: Any,
+    param_meta: dict[str, ParamVersionMeta],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Extract argument and option metadata from a function's signature."""
+
+    def _apply_param_meta(entry: dict[str, Any], param_name: str) -> None:
+        pv = param_meta.get(param_name)
+        if pv is None:
+            return
+        if pv.since_version:
+            entry["since_version"] = pv.since_version
+        if pv.deprecated_since:
+            entry["deprecated_since"] = pv.deprecated_since
+
     arguments: list[dict[str, Any]] = []
     options: list[dict[str, Any]] = []
 
@@ -100,6 +117,7 @@ def _extract_params(func: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any
             }
             if default.default is not ...:
                 entry["default"] = _serialize_default(default.default)
+            _apply_param_meta(entry, param_name)
             options.append(entry)
         elif isinstance(default, typer.models.ArgumentInfo):
             entry = {
@@ -108,16 +126,17 @@ def _extract_params(func: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any
                 "required": default.default is ...,
                 "description": default.help or "",
             }
+            _apply_param_meta(entry, param_name)
             arguments.append(entry)
         elif default is inspect.Parameter.empty:
-            arguments.append(
-                {
-                    "name": param_name,
-                    "type": type_str,
-                    "required": True,
-                    "description": "",
-                }
-            )
+            entry = {
+                "name": param_name,
+                "type": type_str,
+                "required": True,
+                "description": "",
+            }
+            _apply_param_meta(entry, param_name)
+            arguments.append(entry)
 
     return arguments, options
 

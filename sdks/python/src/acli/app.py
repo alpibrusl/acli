@@ -161,6 +161,7 @@ class ACLIApp:
             code=exc.code.name,
             message=str(exc),
             hint=exc.hint,
+            hints=exc.hints,
             docs=exc.docs,
             version=self.version,
         )
