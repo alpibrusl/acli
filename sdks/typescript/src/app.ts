@@ -74,9 +74,10 @@ export class AcliApp {
         await handler(opts);
       } catch (err) {
         if (err instanceof AcliError) {
-          this.handleError(err);
+          process.exitCode = this.handleError(err);
         } else {
-          this.handleUnexpectedError(err as Error);
+          const error = err instanceof Error ? err : new Error(String(err));
+          process.exitCode = this.handleUnexpectedError(error);
         }
       }
     });
@@ -120,7 +121,7 @@ export class AcliApp {
       const lastInfo = this.tree.commands[this.tree.commands.length - 1];
       if (lastInfo) {
         const name = flags.replace(/^--/, '').split(/[\s,<]/)[0].replace(/-/g, '_');
-        lastInfo.options.unshift({
+        lastInfo.options.push({
           name,
           type: 'string',
           description,
@@ -136,9 +137,17 @@ export class AcliApp {
     return this.tree;
   }
 
-  /** Run the application (parses argv). */
-  async run(argv?: string[]): Promise<void> {
-    await this.program.parseAsync(argv ?? process.argv);
+  /** Run the application (parses argv). Returns exit code. */
+  async run(argv?: string[]): Promise<ExitCode> {
+    try {
+      await this.program.parseAsync(argv ?? process.argv);
+      return ExitCode.Success;
+    } catch (err) {
+      if (err instanceof AcliError) {
+        return this.handleError(err);
+      }
+      return this.handleUnexpectedError(err instanceof Error ? err : new Error(String(err)));
+    }
   }
 
   // ── Built-in commands ──────────────────────────────────────────────────
@@ -149,8 +158,8 @@ export class AcliApp {
       .description('Output the full command tree as JSON for agent consumption.')
       .option('--acli-version', 'Show only the ACLI spec version', false)
       .option('--output <format>', 'Output format', 'json')
-      .action((opts: { aclVersion?: boolean; output: string }) => {
-        if (opts.aclVersion) {
+      .action((opts: { acliVersion?: boolean; output: string }) => {
+        if (opts.acliVersion) {
           if (opts.output === 'json') {
             process.stdout.write(JSON.stringify({ acli_version: '0.1.0' }) + '\n');
           } else {
@@ -212,7 +221,8 @@ export class AcliApp {
 
   // ── Error handling ─────────────────────────────────────────────────────
 
-  private handleError(err: AcliError): void {
+  /** Handle an AcliError — emit JSON error envelope and return exit code. */
+  handleError(err: AcliError): ExitCode {
     const cmdName = err.command ?? this.name;
     const envelope = errorEnvelope(cmdName, err.code, err.message, {
       hint: err.hint,
@@ -220,15 +230,15 @@ export class AcliApp {
       version: this.version,
     });
     emit(envelope, 'json');
-    process.exit(err.code);
+    return err.code;
   }
 
-  private handleUnexpectedError(err: Error): void {
+  private handleUnexpectedError(err: Error): ExitCode {
     const envelope = errorEnvelope(this.name, ExitCode.GeneralError, err.message, {
       hint: 'This is an unexpected error. Please report it.',
       version: this.version,
     });
     emit(envelope, 'json');
-    process.exit(ExitCode.GeneralError);
+    return ExitCode.GeneralError;
   }
 }

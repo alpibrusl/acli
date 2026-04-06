@@ -20,6 +20,9 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "keywords": ["cli", "agent", "ai", "specification", "commander"],
   "license": "EUPL-1.2",
   "repository": {
