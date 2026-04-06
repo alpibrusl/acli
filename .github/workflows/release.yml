@@ -68,6 +68,48 @@ jobs:
         with:
           verbose: true
 
+  publish-npm:
+    name: Publish to npm
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: sdks/typescript
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install and build
+        run: npm ci && npm run build
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Publish to npm
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if npm view @acli/sdk@$PKG_VERSION > /dev/null 2>&1; then
+            echo "Version $PKG_VERSION already published, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   publish-crates:
     name: Publish to crates.io
     needs: build
@@ -100,7 +142,7 @@ jobs:
 
   github-release:
     name: Create GitHub Release
-    needs: [publish-pypi, publish-crates]
+    needs: [publish-pypi, publish-npm, publish-crates]
     runs-on: ubuntu-latest
     permissions:
       contents: write
