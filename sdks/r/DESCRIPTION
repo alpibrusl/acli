@@ -1,0 +1,16 @@
+Package: acli.spec
+Title: Agent-Friendly Command Line Interface (ACLI) Specification
+Version: 0.3.0
+Author: ACLI Contributors
+Maintainer: ACLI Contributors <acli-spec@noreply.invalid>
+Description: Reference implementation of the ACLI v0.1.0 specification: JSON
+    envelopes, semantic exit codes, `.cli/` folder generation, and SKILLS.md for
+    agent-discoverable CLI tools.
+License: EUPL (>= 1.2)
+Encoding: UTF-8
+Imports:
+    jsonlite (>= 1.8.0)
+Suggests:
+    testthat (>= 3.0.0)
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.0
