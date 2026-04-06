@@ -17,8 +17,12 @@ sdks/
     src/acli/             # Source code
     tests/                # Test suite
     pyproject.toml        # Package config, linting, test settings
+  java/                   # Java SDK (Maven, dev.acli:acli-spec)
+    src/main/java/dev/acli/
+    pom.xml
 examples/
-  weather/weather.py      # Complete example ACLI tool
+  weather/weather.py        # Complete example ACLI tool (Python)
+  weather-java/             # Same example in Java (Maven)
 docs/                     # MkDocs documentation source
 mkdocs.yml                # MkDocs config (Material theme)
 ```
