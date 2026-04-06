@@ -23,6 +23,8 @@ sdks/
 examples/
   weather/weather.py        # Complete example ACLI tool (Python)
   weather-java/             # Same example in Java (Maven)
+  weather-rust/             # Same example (Rust / Cargo)
+  weather-ts/               # Same example (TypeScript / Node)
 docs/                     # MkDocs documentation source
 mkdocs.yml                # MkDocs config (Material theme)
 ```
