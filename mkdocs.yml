@@ -57,6 +57,8 @@ markdown_extensions:
 nav:
   - Home: index.md
   - "Example: Weather CLI": example.md
+  - SDKs:
+      - Overview: sdks/index.md
   - Specification:
       - Overview: spec/index.md
       - "Why ACLI? MCP → Skills → CLI": spec/evolution.md

@@ -76,12 +76,17 @@ You automatically get:
 
 ## SDKs
 
-| Language | Status | Package |
-|----------|--------|---------|
-| Python   | ✅ Available | `pip install acli-spec` |
-| Go       | 🔜 Planned  | — |
-| Rust     | 🔜 Planned  | — |
-| Node.js  | 🔜 Planned  | — |
+| Language | Status | Install / location |
+|----------|--------|---------------------|
+| Python | Published | `pip install acli-spec` |
+| Rust | Published | `cargo add acli` |
+| TypeScript | Published | `npm install @acli/sdk` |
+| Go | In monorepo | [`sdks/go`](https://github.com/alpibrusl/acli/tree/main/sdks/go) |
+| .NET | In monorepo | [`sdks/dotnet`](https://github.com/alpibrusl/acli/tree/main/sdks/dotnet) |
+| R | In monorepo | [`sdks/r`](https://github.com/alpibrusl/acli/tree/main/sdks/r) |
+| Java | In monorepo | [`sdks/java`](https://github.com/alpibrusl/acli/tree/main/sdks/java) |
+
+See **[SDKs overview](sdks/index.md)** for details, README links, and examples.
 
 ## See also
 

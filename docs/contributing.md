@@ -21,6 +21,8 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
+Other SDKs (Rust, TypeScript, Go, .NET, R, Java) have their own READMEs under `sdks/<language>/`. When you change a public API, update **root `README.md`**, **`docs/index.md`**, **`docs/sdks/index.md`**, and **`mkdocs.yml`** if navigation changes.
+
 ## Quality checks
 
 All checks must pass before submitting a PR:

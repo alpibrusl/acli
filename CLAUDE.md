@@ -13,13 +13,13 @@ The spec lives in `ACLI_SPEC.md` (v0.1.0, draft). This is a monorepo: language S
 ```
 ACLI_SPEC.md              # The specification document
 sdks/
-  python/                 # Python SDK (acli-spec package)
-    src/acli/             # Source code
-    tests/                # Test suite
-    pyproject.toml        # Package config, linting, test settings
-  java/                   # Java SDK (Maven, dev.acli:acli-spec)
-    src/main/java/dev/acli/
-    pom.xml
+  python/                 # Python SDK (PyPI: acli-spec)
+  rust/                   # Rust SDK (crates.io: acli)
+  typescript/             # TypeScript SDK (npm: @acli/sdk)
+  go/                     # Go module github.com/alpibrusl/acli-go
+  dotnet/                 # .NET class library Acli.Spec
+  r/                      # R package acli.spec
+  java/                   # Java SDK (Maven coordinates dev.acli:acli-spec)
 examples/
   weather/weather.py        # Complete example ACLI tool (Python)
   weather-java/             # Same example in Java (Maven)

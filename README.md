@@ -88,12 +88,17 @@ The full spec is in [`ACLI_SPEC.md`](ACLI_SPEC.md). Key concepts:
 
 ## SDKs
 
-| Language | Status | Package |
-|----------|--------|---------|
-| Python   | Available | [`acli-spec`](https://pypi.org/project/acli-spec/) |
-| Rust     | Available | [`acli`](https://crates.io/crates/acli) (wraps clap) |
-| TypeScript | Available | [`@acli/sdk`](https://www.npmjs.com/package/@acli/sdk) (wraps Commander) |
-| Go       | Planned  | — |
+| Language | Status | Package / source |
+|----------|--------|------------------|
+| Python | Published | [`acli-spec`](https://pypi.org/project/acli-spec/) (Typer) |
+| Rust | Published | [`acli`](https://crates.io/crates/acli) (clap) |
+| TypeScript | Published | [`@acli/sdk`](https://www.npmjs.com/package/@acli/sdk) (Commander) |
+| Go | In monorepo | [`sdks/go`](sdks/go) — module `github.com/alpibrusl/acli-go` |
+| .NET | In monorepo | [`sdks/dotnet`](sdks/dotnet) — `Acli.Spec` |
+| R | In monorepo | [`sdks/r`](sdks/r) — package `acli.spec` |
+| Java | In monorepo | [`sdks/java`](sdks/java) — Maven `dev.acli:acli-spec` (build from source) |
+
+Overview and links: **[Documentation — SDKs](https://alpibrusl.github.io/acli/sdks/)**
 
 ## Documentation
 
