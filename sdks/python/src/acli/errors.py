@@ -88,6 +88,66 @@ class PreconditionError(ACLIError):
         )
 
 
+class UpstreamError(ACLIError):
+    """Raised when an upstream service (HTTP, database, external API) fails.
+
+    Maps to ACLI exit code 7 (UPSTREAM_ERROR). Use for network errors, 5xx
+    responses, timeouts fetching a remote resource, or any failure whose root
+    cause is outside the tool's control.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        hint: str | None = None,
+        hints: list[str] | None = None,
+        docs: str | None = None,
+    ) -> None:
+        super().__init__(
+            message, code=ExitCode.UPSTREAM_ERROR, hint=hint, hints=hints, docs=docs
+        )
+
+
+class TimeoutError(ACLIError):  # noqa: A001 — intentionally shadows builtin
+    """Raised when a tool's own operation times out.
+
+    Maps to ACLI exit code 6 (TIMEOUT). Distinct from UpstreamError: this is
+    the tool giving up, not the network failing.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        hint: str | None = None,
+        hints: list[str] | None = None,
+        docs: str | None = None,
+    ) -> None:
+        super().__init__(
+            message, code=ExitCode.TIMEOUT, hint=hint, hints=hints, docs=docs
+        )
+
+
+class PermissionDeniedError(ACLIError):
+    """Raised when a tool lacks permission to perform the requested action.
+
+    Maps to ACLI exit code 4 (PERMISSION_DENIED).
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        hint: str | None = None,
+        hints: list[str] | None = None,
+        docs: str | None = None,
+    ) -> None:
+        super().__init__(
+            message, code=ExitCode.PERMISSION_DENIED, hint=hint, hints=hints, docs=docs
+        )
+
+
 def suggest_flag(unknown: str, known: list[str]) -> str | None:
     """Suggest a close match for a mistyped flag per spec §4.1."""
     matches = get_close_matches(unknown, known, n=1, cutoff=0.6)
