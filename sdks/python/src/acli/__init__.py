@@ -7,7 +7,10 @@ from acli.errors import (
     ConflictError,
     InvalidArgsError,
     NotFoundError,
+    PermissionDeniedError,
     PreconditionError,
+    TimeoutError,
+    UpstreamError,
     suggest_flag,
 )
 from acli.exit_codes import ExitCode
@@ -34,7 +37,10 @@ __all__ = [
     "InvalidArgsError",
     "NotFoundError",
     "OutputFormat",
+    "PermissionDeniedError",
     "PreconditionError",
+    "TimeoutError",
+    "UpstreamError",
     "acli_command",
     "emit",
     "emit_progress",
@@ -45,4 +51,4 @@ __all__ = [
     "suggest_flag",
 ]
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
