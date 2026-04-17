@@ -68,7 +68,7 @@ ACLI takes a different approach: **the tool is its own documentation**. An agent
 | Discovery | All at once (startup) | All at once (startup) | Incremental (on demand) |
 | Output format | Structured (JSON) | Unstructured (prose) | Structured (JSON envelope) |
 | Error handling | Varies | None | Semantic exit codes + hints |
-| Staleness risk | High (registry drift) | High (manual docs) | None (generated from code) |
+| Staleness risk | High (registry drift) | High (manual docs) | Low for `introspect` (generated from code); medium for `acli skill` output (static artefact — goes stale if regenerated and not committed) |
 | Infrastructure needed | MCP server/registry | File in repo | Nothing — just the CLI |
 | Token cost | All schemas upfront | Full file upfront | Only what's needed |
 

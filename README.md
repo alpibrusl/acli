@@ -17,7 +17,7 @@ SKILLS.md     → instructions written by humans, loaded into context
 | Who maintains the schema? | Humans (external) | Humans (external) | The tool itself |
 | Discovery | All at once (startup) | All at once (startup) | Incremental (on demand) |
 | Output format | Structured (JSON) | Unstructured (prose) | Structured (JSON envelope) |
-| Staleness risk | High (registry drift) | High (manual docs) | None (generated from code) |
+| Staleness risk | High (registry drift) | High (manual docs) | Low for `introspect` (generated); medium for `acli skill` output (static artefact, goes stale if regenerated and not committed) |
 | Infrastructure needed | MCP server/registry | File in repo | Nothing — just the CLI |
 
 Read the full comparison: [Why ACLI? MCP → Skills → CLI](https://alpibrusl.github.io/acli/spec/evolution/)

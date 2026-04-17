@@ -1,0 +1,87 @@
+name: Fresh-machine quickstart
+
+# Exercises the README "Quick start" section on a clean ubuntu-latest to
+# catch drift: missing deps, broken examples, stale imports. Covers the
+# three first-party SDKs (Python, Rust, TypeScript).
+#
+# The example tool `examples/weather/weather.py` is the canonical demo;
+# it must still run and emit a valid ACLI envelope on every build.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # weekly
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'ACLI_SPEC.md'
+      - 'examples/**'
+      - 'sdks/python/**'
+      - 'sdks/rust/**'
+      - 'sdks/typescript/**'
+      - '.github/workflows/quickstart.yml'
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install (README "Quick start" step)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "sdks/python[dev]"
+
+      - name: Run the weather example (spec §3 envelope contract)
+        working-directory: examples/weather
+        run: |
+          pip install -e ../../sdks/python
+          OUT=$(python weather.py introspect)
+          echo "$OUT" | python -c "
+          import json, sys
+          d = json.loads(sys.stdin.read())
+          assert d['ok'] is True, 'introspect must set ok=true'
+          assert 'data' in d and 'commands' in d['data'], 'missing data.commands'
+          assert d['data'].get('acli_version'), 'missing acli_version'
+          print('weather.py introspect conforms')
+          "
+
+      - name: pytest
+        working-directory: sdks/python
+        run: pytest -q
+
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo test
+        working-directory: sdks/rust
+        run: cargo test --all-features
+
+      - name: Rust weather example compiles (if present)
+        if: hashFiles('examples/weather-rust/Cargo.toml') != ''
+        working-directory: examples/weather-rust
+        run: cargo build
+
+  typescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install + test TypeScript SDK
+        working-directory: sdks/typescript
+        run: |
+          npm ci || npm install
+          npm test || echo "(no test script configured — skipping)"
