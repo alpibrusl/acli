@@ -86,17 +86,41 @@ The full spec is in [`ACLI_SPEC.md`](ACLI_SPEC.md). Key concepts:
 - **Idempotency** — each command declares `true|false|conditional`
 - **Skill files** — auto-generated SKILLS.md bridging cold-start gap
 
+### Stability policy
+
+The spec is **v0.1.0 (Draft)**. Until 1.0:
+
+- No breaking changes to the envelope shape, exit codes, or required
+  `introspect` fields. Safe to build against.
+- Additive changes (new optional fields, new commands) may land on minor
+  bumps. Consumers should ignore unknown fields.
+- Breaking changes, if they become necessary, will ship as `v0.2.0` with
+  a clear migration note — not silently.
+
+There is not yet a conformance test suite. "ACLI-compliant" today means
+"envelope and exit codes match the spec on manual inspection". A small
+conformance runner is tracked in [issue #22](https://github.com/alpibrusl/acli/issues/22).
+
 ## SDKs
 
-| Language | Status | Package / source |
-|----------|--------|------------------|
-| Python | Published | [`acli-spec`](https://pypi.org/project/acli-spec/) (Typer) |
-| Rust | Published | [`acli`](https://crates.io/crates/acli) (clap) |
-| TypeScript | Published | [`@acli/sdk`](https://www.npmjs.com/package/@acli/sdk) (Commander) |
-| Go | In monorepo | [`sdks/go`](sdks/go) — module `github.com/alpibrusl/acli-go` |
-| .NET | In monorepo | [`sdks/dotnet`](sdks/dotnet) — `Acli.Spec` |
-| R | In monorepo | [`sdks/r`](sdks/r) — package `acli.spec` |
-| Java | In monorepo | [`sdks/java`](sdks/java) — Maven `dev.acli:acli-spec` (build from source) |
+Seven SDKs are in the monorepo at different maturity levels. Python / Rust /
+TypeScript are first-party — the spec author tests changes against them
+first and keeps them in sync on each spec bump. The rest are
+community-maintained and may lag.
+
+| Language | Support | LOC (src+tests) | Package / source |
+|----------|---------|-----------------|------------------|
+| Python | **First-party** | ~3.4k | [`acli-spec`](https://pypi.org/project/acli-spec/) (Typer) |
+| Rust | **First-party** | ~1.9k | [`acli`](https://crates.io/crates/acli) (clap) |
+| TypeScript | **First-party** | ~1.2k | [`@acli/sdk`](https://www.npmjs.com/package/@acli/sdk) (Commander) |
+| Go | Community | ~0.8k | [`sdks/go`](sdks/go) — module `github.com/alpibrusl/acli-go` |
+| .NET | Community | ~0.7k | [`sdks/dotnet`](sdks/dotnet) — `Acli.Spec` |
+| R | Community | ~0.3k | [`sdks/r`](sdks/r) — package `acli.spec` |
+| Java | Community | ~1.2k | [`sdks/java`](sdks/java) — Maven `dev.acli:acli-spec` (build from source) |
+
+*Community* means: bug reports accepted, PRs welcome, but no guarantee
+the SDK tracks the current spec. File a GitHub issue if you depend on
+one and it's drifted.
 
 Overview and links: **[Documentation — SDKs](https://alpibrusl.github.io/acli/sdks/)**
 
