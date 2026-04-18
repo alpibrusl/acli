@@ -136,6 +136,10 @@ The concept of agents discovering tools at runtime has emerged independently in 
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, quality checks, and PR process.
 
+## Project status
+
+**One active maintainer, best-effort response times.** Spec is v0.1.0 Draft with a no-breaking-changes-until-1.0 policy (see *Stability policy* in the Specification section). First-party SDKs (Python, Rust, TypeScript) track every spec change; community SDKs may lag. Not suitable for deployments requiring vendor SLAs.
+
 ## License
 
 [EUPL-1.2](LICENSE)
