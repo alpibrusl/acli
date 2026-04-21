@@ -32,4 +32,4 @@ export {
   type Meta,
   type OutputFormat,
 } from './output.js';
-export { generateSkill } from './skill.js';
+export { generateSkill, type SkillOptions } from './skill.js';

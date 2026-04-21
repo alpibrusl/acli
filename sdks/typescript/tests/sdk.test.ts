@@ -240,7 +240,7 @@ describe('Skill', () => {
   });
 
   it('writes to file', () => {
-    const target = path.join(tmpDir, 'SKILLS.md');
+    const target = path.join(tmpDir, 'SKILL.md');
     const content = generateSkill(sampleTree(), target);
     expect(fs.existsSync(target)).toBe(true);
     expect(fs.readFileSync(target, 'utf-8')).toBe(content);
@@ -254,6 +254,36 @@ describe('Skill', () => {
     const available = content.split('## Available commands')[1].split('##')[0];
     expect(available).not.toContain('`noether introspect`');
     expect(available).toContain('`noether run`');
+  });
+
+  it('emits default frontmatter', () => {
+    const content = generateSkill(sampleTree());
+    expect(content.startsWith('---\n')).toBe(true);
+    const lines = content.split('\n');
+    expect(lines[1]).toBe('name: noether');
+    expect(lines[2].startsWith('description: ')).toBe(true);
+    expect(lines[2]).toContain('noether');
+    const closing = lines.indexOf('---', 1);
+    const block = lines.slice(0, closing + 1);
+    expect(block.every(l => !l.startsWith('when_to_use:'))).toBe(true);
+    expect(lines[closing + 1]).toBe('');
+    expect(lines[closing + 2]).toBe('# noether');
+  });
+
+  it('emits explicit frontmatter', () => {
+    const content = generateSkill(sampleTree(), undefined, {
+      description: 'Run Noether pipelines.',
+      whenToUse: 'Use when deploying.',
+    });
+    const lines = content.split('\n');
+    expect(lines).toContain('description: Run Noether pipelines.');
+    expect(lines).toContain('when_to_use: Use when deploying.');
+  });
+
+  it('collapses newlines in frontmatter values', () => {
+    const content = generateSkill(sampleTree(), undefined, { description: 'A\nB' });
+    const lines = content.split('\n');
+    expect(lines).toContain('description: A B');
   });
 });
 

@@ -1,18 +1,48 @@
-/** Generate SKILLS.md files from ACLI command trees. */
+/**
+ * Generate SKILL.md files from ACLI command trees.
+ *
+ * Emits a file conforming to the agentskills.io open standard
+ * (https://agentskills.io): YAML frontmatter (`name`, `description`, optional
+ * `when_to_use`) followed by the ACLI command reference body.
+ */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { CommandTree } from './introspect.js';
+import type { CommandInfo, CommandTree } from './introspect.js';
 
 const BUILTIN_COMMANDS = new Set(['introspect', 'version', 'skill']);
 
-/** Generate a SKILLS.md file from an ACLI command tree. */
+export interface SkillOptions {
+  description?: string;
+  whenToUse?: string;
+}
+
+function oneLine(value: string): string {
+  return value.split(/\s+/).filter(Boolean).join(' ');
+}
+
+function defaultDescription(name: string, userCommands: CommandInfo[]): string {
+  if (userCommands.length === 0) return `Invoke the \`${name}\` CLI.`;
+  const shown = userCommands.slice(0, 4).map(c => c.name);
+  const suffix = userCommands.length > 4 ? '…' : '';
+  return `Invoke the \`${name}\` CLI. Commands: ${shown.join(', ')}${suffix}`;
+}
+
+/** Generate a SKILL.md file from an ACLI command tree. */
 export function generateSkill(
   tree: CommandTree,
   targetPath?: string,
+  options: SkillOptions = {},
 ): string {
   const { name, version, commands } = tree;
-  const lines: string[] = [];
+  const userCommands = commands.filter(c => !BUILTIN_COMMANDS.has(c.name));
+  const description = options.description
+    ? oneLine(options.description)
+    : defaultDescription(name, userCommands);
+
+  const lines: string[] = ['---', `name: ${name}`, `description: ${description}`];
+  if (options.whenToUse) lines.push(`when_to_use: ${oneLine(options.whenToUse)}`);
+  lines.push('---', '');
 
   lines.push(`# ${name}`, '');
   lines.push(`> Auto-generated skill file for \`${name}\` v${version}`);
@@ -21,7 +51,6 @@ export function generateSkill(
 
   // Quick reference
   lines.push('## Available commands', '');
-  const userCommands = commands.filter(c => !BUILTIN_COMMANDS.has(c.name));
   for (const cmd of userCommands) {
     let tag = '';
     if (cmd.idempotent === true) tag = ' (idempotent)';

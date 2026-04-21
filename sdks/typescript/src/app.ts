@@ -12,7 +12,7 @@ import {
   errorEnvelope,
   successEnvelope,
 } from './output.js';
-import { generateSkill } from './skill.js';
+import { generateSkill, type SkillOptions } from './skill.js';
 
 export interface AcliCommandMeta {
   examples: [string, string][];
@@ -33,11 +33,24 @@ export class AcliApp {
   private program: Command;
   private tree: CommandTree;
   private cliDir?: string;
+  private skillOptions: SkillOptions;
 
-  constructor(name: string, version: string, options?: { cliDir?: string }) {
+  constructor(
+    name: string,
+    version: string,
+    options?: {
+      cliDir?: string;
+      skillDescription?: string;
+      skillWhenToUse?: string;
+    },
+  ) {
     this.name = name;
     this.version = version;
     this.cliDir = options?.cliDir;
+    this.skillOptions = {
+      description: options?.skillDescription,
+      whenToUse: options?.skillWhenToUse,
+    };
     this.tree = createCommandTree(name, version);
 
     this.program = new Command(name)
@@ -201,11 +214,11 @@ export class AcliApp {
   private registerSkill(): void {
     this.program
       .command('skill')
-      .description('Generate a SKILLS.md file for agent bootstrapping.')
+      .description('Generate a SKILL.md (agentskills.io) file for agent bootstrapping.')
       .option('--out <path>', 'Write skill file to this path instead of stdout')
       .option('--output <format>', 'Output format', 'text')
       .action((opts: { out?: string; output: string }) => {
-        const content = generateSkill(this.tree, opts.out);
+        const content = generateSkill(this.tree, opts.out, this.skillOptions);
 
         if (opts.output === 'json') {
           const data = { path: opts.out ?? null, content };
