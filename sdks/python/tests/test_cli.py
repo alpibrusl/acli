@@ -135,7 +135,7 @@ class TestValidateCommand:
 
 class TestSkillCommand:
     def test_skill_writes_file(self, tmp_path: Path) -> None:
-        out_path = tmp_path / "SKILLS.md"
+        out_path = tmp_path / "SKILL.md"
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:

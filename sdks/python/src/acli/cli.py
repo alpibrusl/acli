@@ -69,7 +69,7 @@ def validate(
 @acli_command(
     examples=[
         ("Generate skill file for a tool", "acli skill --bin noether"),
-        ("Write skill file to a specific path", "acli skill --bin noether --out SKILLS.md"),
+        ("Write skill file to a specific path", "acli skill --bin noether --out SKILL.md"),
     ],
     idempotent=True,
     see_also=["validate", "init"],
@@ -89,12 +89,13 @@ def skill(
         OutputFormat.text, "--output", help="Output format. type:enum[text|json|table]"
     ),
 ) -> None:
-    """Generate a SKILLS.md file for an ACLI tool.
+    """Generate a SKILL.md (agentskills.io) file for an ACLI tool.
 
     Creates a skill file that gives agents immediate context about the tool's
-    capabilities, commands, options, and examples. This bridges the cold-start
-    gap: agents get Stage 2 context (SKILLS.md) auto-generated from Stage 3
-    source of truth (the tool itself).
+    capabilities, commands, options, and examples. The output conforms to the
+    agentskills.io open standard (YAML frontmatter + body), so it drops into
+    .claude/skills/<tool>/SKILL.md, .cursor/skills/<tool>/SKILL.md, Gemini
+    CLI, Codex, etc. without modification.
     """
     tree = _load_tree(bin_name)
     target = Path(out) if out else None

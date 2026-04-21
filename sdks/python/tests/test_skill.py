@@ -147,13 +147,13 @@ class TestGenerateSkill:
         assert "`.cli/README.md`" in content
 
     def test_write_to_file(self, tmp_path: Path) -> None:
-        target = tmp_path / "SKILLS.md"
+        target = tmp_path / "SKILL.md"
         content = generate_skill(_sample_tree(), target_path=target)
         assert target.exists()
         assert target.read_text() == content
 
     def test_write_creates_parent_dirs(self, tmp_path: Path) -> None:
-        target = tmp_path / "nested" / "dir" / "SKILLS.md"
+        target = tmp_path / "nested" / "dir" / "SKILL.md"
         generate_skill(_sample_tree(), target_path=target)
         assert target.exists()
 
@@ -161,3 +161,42 @@ class TestGenerateSkill:
         content = generate_skill(_sample_tree())
         assert "Re-generate with:" in content
         assert "`noether skill`" in content
+
+    def test_frontmatter_default_description(self) -> None:
+        content = generate_skill(_sample_tree())
+        assert content.startswith("---\n")
+        lines = content.splitlines()
+        assert lines[1] == "name: noether"
+        assert lines[2].startswith("description: ")
+        assert "noether" in lines[2]
+        # Default description lists user-facing commands
+        assert "run" in lines[2] or "status" in lines[2]
+        closing_idx = lines.index("---", 1)
+        block = lines[: closing_idx + 1]
+        assert not any(line.startswith("when_to_use:") for line in block)
+
+    def test_frontmatter_explicit(self) -> None:
+        content = generate_skill(
+            _sample_tree(),
+            description="Run Noether pipelines.",
+            when_to_use="Use when deploying pipelines.",
+        )
+        lines = content.splitlines()
+        assert "description: Run Noether pipelines." in lines
+        assert "when_to_use: Use when deploying pipelines." in lines
+
+    def test_frontmatter_strips_newlines(self) -> None:
+        content = generate_skill(
+            _sample_tree(),
+            description="Line 1\nLine 2",
+        )
+        lines = content.splitlines()
+        assert "description: Line 1 Line 2" in lines
+
+    def test_frontmatter_precedes_title(self) -> None:
+        content = generate_skill(_sample_tree())
+        lines = content.splitlines()
+        closing = lines.index("---", 1)
+        # blank line after closing, then heading
+        assert lines[closing + 1] == ""
+        assert lines[closing + 2] == "# noether"

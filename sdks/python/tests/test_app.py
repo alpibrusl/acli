@@ -240,7 +240,7 @@ class TestACLIAppSkill:
 
     def test_skill_to_file(self, tmp_path: Path) -> None:
         app = _make_app(tmp_path)
-        out_file = tmp_path / "SKILLS.md"
+        out_file = tmp_path / "SKILL.md"
 
         old_stdout = sys.stdout
         sys.stdout = StringIO()
