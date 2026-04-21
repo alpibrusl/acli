@@ -8,10 +8,11 @@ import (
 
 // App holds ACLI application state (Rust-style handlers).
 type App struct {
-	Name    string
-	Version string
-	Tree    *CommandTree
-	CliDir  string
+	Name         string
+	Version      string
+	Tree         *CommandTree
+	CliDir       string
+	SkillOptions SkillOptions
 }
 
 // NewApp creates an app with an empty command tree.
@@ -61,9 +62,9 @@ func (a *App) HandleVersion(output OutputFormat) error {
 	return nil
 }
 
-// HandleSkill writes SKILLS.md content or JSON envelope.
+// HandleSkill writes SKILL.md content (agentskills.io) or JSON envelope.
 func (a *App) HandleSkill(outPath string, output OutputFormat) error {
-	content, err := GenerateSkill(a.Tree, "")
+	content, err := GenerateSkillWith(a.Tree, "", a.SkillOptions)
 	if err != nil {
 		return err
 	}
