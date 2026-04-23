@@ -9,6 +9,7 @@ public sealed class AcliApp
     public string Version { get; }
     public CommandTree Tree { get; }
     public string? CliDir { get; set; }
+    public SkillOptions SkillOptions { get; set; } = new();
 
     public AcliApp(string name, string version)
     {
@@ -51,7 +52,7 @@ public sealed class AcliApp
 
     public void HandleSkill(string? outPath, OutputFormat output)
     {
-        var content = Skill.Generate(Tree, null);
+        var content = Skill.Generate(Tree, null, SkillOptions);
         if (output == OutputFormat.Json)
         {
             var data = new Dictionary<string, object?> { ["content"] = content, ["path"] = outPath };
@@ -60,7 +61,7 @@ public sealed class AcliApp
         }
         else if (!string.IsNullOrEmpty(outPath))
         {
-            Skill.Generate(Tree, outPath);
+            Skill.Generate(Tree, outPath, SkillOptions);
             Console.WriteLine($"Skill file written to {outPath}");
         }
         else
