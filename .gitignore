@@ -43,3 +43,6 @@ target/
 
 # MkDocs
 site/
+
+# Claude Code runtime state
+.claude/
