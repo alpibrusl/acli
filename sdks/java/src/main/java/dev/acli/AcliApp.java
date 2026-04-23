@@ -16,11 +16,18 @@ public final class AcliApp {
     private final String version;
     private final CommandTree tree;
     private java.nio.file.Path cliDir;
+    private Skill.Options skillOptions = Skill.Options.empty();
 
     public AcliApp(String name, String version) {
         this.name = name;
         this.version = version;
         this.tree = new CommandTree(name, version);
+    }
+
+    /** Configure the SKILL.md frontmatter written by {@link #handleSkill}. */
+    public AcliApp withSkillOptions(Skill.Options opts) {
+        this.skillOptions = opts != null ? opts : Skill.Options.empty();
+        return this;
     }
 
     public String getName() {
@@ -98,9 +105,9 @@ public final class AcliApp {
         }
     }
 
-    /** Built-in: {@code skill}. */
+    /** Built-in: {@code skill} — emits SKILL.md per agentskills.io. */
     public void handleSkill(java.nio.file.Path outPath, OutputFormat output) throws java.io.IOException {
-        String content = Skill.generateSkill(tree, outPath);
+        String content = Skill.generateSkill(tree, outPath, skillOptions);
 
         if (output == OutputFormat.json) {
             ObjectNode data = JsonNodeFactory.instance.objectNode();

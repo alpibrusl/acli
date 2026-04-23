@@ -429,7 +429,7 @@ You get the full command tree — every command, argument, option, type, example
 citecheck skill
 ```
 
-Prints a Markdown `SKILLS.md` that any agent can read directly. You'll use this later when we plug the CLI into Claude Code, Cursor, etc.
+Prints a Markdown `SKILL.md` (conforming to the [agentskills.io](https://agentskills.io) open standard) that any agent can read directly. You'll use this later when we plug the CLI into Claude Code, Cursor, etc.
 
 ## Adding LLM verification
 
@@ -573,12 +573,12 @@ Notice the verdict change: pages that literally contain a claim but actually con
 
 The single most valuable property of ACLI: **any agent can learn your CLI by running `citecheck introspect`**. No MCP server to write, no hand-crafted tool description to keep in sync, no re-deploying prompts.
 
-Below: how to wire `citecheck` into the six most common assistants. The pattern is always the same — expose the `SKILLS.md` ACLI generates for you.
+Below: how to wire `citecheck` into the six most common assistants. The pattern is always the same — expose the `SKILL.md` ACLI generates for you. The file conforms to the [agentskills.io](https://agentskills.io) open standard, so it drops into `.claude/skills/citecheck/SKILL.md`, `.cursor/skills/citecheck/SKILL.md`, Gemini CLI, Codex, etc. without modification.
 
-Generate `SKILLS.md` once:
+Generate `SKILL.md` once:
 
 ```bash
-citecheck skill > SKILLS.md
+citecheck skill --out SKILL.md
 ```
 
 ### Claude Code
@@ -588,7 +588,7 @@ Claude Code reads project-level `CLAUDE.md`. Reference the skills file:
 ```markdown title="CLAUDE.md"
 # This project uses citecheck for citation verification.
 
-See `SKILLS.md` for the full CLI reference, or run `citecheck introspect`
+See `SKILL.md` for the full CLI reference, or run `citecheck introspect`
 for the machine-readable command tree.
 
 Prefer `citecheck scan` over manual URL checking when editing Markdown files.
@@ -608,7 +608,7 @@ alwaysApply: false
 
 When editing Markdown files that contain citations, run `citecheck scan <file>` before committing.
 Use `citecheck verify <url> --claim "..." --semantic` for single-link checks.
-Full CLI reference: run `citecheck introspect --output json` or read SKILLS.md.
+Full CLI reference: run `citecheck introspect --output json` or read SKILL.md.
 ```
 
 ### GitHub Copilot
@@ -621,7 +621,7 @@ Copilot reads `.github/copilot-instructions.md`:
 This project includes `citecheck`, an ACLI-compliant CLI for verifying citations.
 - Run `citecheck scan <file.md>` to audit all links in a file
 - Run `citecheck introspect` to learn the full command tree
-- See SKILLS.md for details
+- See SKILL.md for details
 ```
 
 ### Gemini Code Assist / gemini-cli
@@ -638,17 +638,17 @@ Always prefer citecheck over writing ad-hoc URL-checking scripts.
 
 ### Aider
 
-Aider can read arbitrary files as context. Add `SKILLS.md` to your session:
+Aider can read arbitrary files as context. Add `SKILL.md` to your session:
 
 ```bash
-aider --read SKILLS.md src/**/*.md
+aider --read SKILL.md src/**/*.md
 ```
 
 Or in `.aider.conf.yml`:
 
 ```yaml
 read:
-  - SKILLS.md
+  - SKILL.md
 ```
 
 ### Codex CLI
@@ -684,7 +684,7 @@ citecheck skill --out .opencode/citecheck.md
 All six assistants converge on the same thing: give them a Markdown file that describes your CLI. ACLI generates that file for you automatically:
 
 ```bash
-citecheck skill --out SKILLS.md   # one artifact
+citecheck skill --out SKILL.md   # one artifact
 ```
 
 Link it from whatever file your assistant happens to read. When you add or change commands, regenerate the skill — the assistant's context updates automatically the next session.

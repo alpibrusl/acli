@@ -11,7 +11,7 @@ The core insight: a well-designed CLI is self-documenting enough that an agent c
 
 ```
 MCP           → schema defined externally, injected at agent startup
-SKILLS.md     → instructions written by humans, loaded into context
+SKILL.md      → authored instructions (agentskills.io open standard)
 <cli> --help  → tool teaches itself to the agent on demand (Progressive Skills)
 ```
 
@@ -122,6 +122,34 @@ The `.cli/` folder is the **persistent knowledge base** for agents. It allows an
 - Updated automatically on `<tool> --version` or `<tool> introspect`
 - Never requires elevated permissions to write
 - Safe to commit to version control
+
+### 1.4 `SKILL.md` bridge (agentskills.io)
+
+Every ACLI tool SHOULD expose a `skill` subcommand that emits a `SKILL.md` conforming to the [Agent Skills open standard](https://agentskills.io). This gives agents (Claude Code, Cursor, Gemini CLI, Codex, Copilot, …) a drop-in bootstrap file without having to learn ACLI conventions first.
+
+The emitted file MUST:
+- Be named `SKILL.md` (singular).
+- Begin with a YAML frontmatter block containing at minimum `name` and `description`. `when_to_use` is RECOMMENDED when the tool's scope is narrow enough to state it.
+- Have single-line frontmatter values (no multi-line YAML).
+- After the frontmatter, render the same `--help`-equivalent body described by this spec (commands, options, arguments, exit codes, examples).
+
+Example:
+
+~~~markdown
+---
+name: weather
+description: Invoke the `weather` CLI to fetch forecasts and alerts.
+when_to_use: Use when the user asks about weather, forecasts, or regional advisories.
+---
+
+# weather
+
+…
+~~~
+
+ACLI does not redefine the frontmatter schema; any additional keys supported by agentskills.io (e.g. `allowed-tools`, `argument-hint`) MAY be passed through verbatim by SDK implementations but are not required.
+
+**Body section order (stable).** Below the frontmatter, the body is emitted in a fixed order: `# <name>` heading → regeneration blockquote → `## Available commands` → per-command detail sections (options, arguments, examples, see also) → `## Output format` → `## Exit codes` → `## Further discovery`. Tools that diff or index the emitted file can rely on this ordering being stable within a spec minor version.
 
 ---
 

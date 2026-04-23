@@ -11,27 +11,57 @@ var builtinCommands = map[string]struct{}{
 	"introspect": {}, "version": {}, "skill": {},
 }
 
-// GenerateSkill builds SKILLS.md content; if path is non-empty, writes the file.
+// SkillOptions carries caller-supplied values for the SKILL.md frontmatter
+// (agentskills.io).
+type SkillOptions struct {
+	Description string
+	WhenToUse   string
+}
+
+// GenerateSkill builds SKILL.md content using default frontmatter; if path is
+// non-empty, writes the file.
 func GenerateSkill(tree *CommandTree, path string) (string, error) {
+	return GenerateSkillWith(tree, path, SkillOptions{})
+}
+
+// GenerateSkillWith builds SKILL.md content with caller-supplied frontmatter
+// options. Conforms to the agentskills.io open standard.
+func GenerateSkillWith(tree *CommandTree, path string, opts SkillOptions) (string, error) {
 	name := tree.Name
 	ver := tree.Version
+
+	var userCommands []CommandInfo
+	for _, cmd := range tree.Commands {
+		if _, skip := builtinCommands[cmd.Name]; skip {
+			continue
+		}
+		userCommands = append(userCommands, cmd)
+	}
+
+	description := collapseWS(opts.Description)
+	if description == "" {
+		description = defaultSkillDescription(name, userCommands)
+	}
+
 	var b strings.Builder
+	b.WriteString("---\n")
+	fmt.Fprintf(&b, "name: %s\n", yamlScalar(name))
+	fmt.Fprintf(&b, "description: %s\n", yamlScalar(description))
+	if w := collapseWS(opts.WhenToUse); w != "" {
+		fmt.Fprintf(&b, "when_to_use: %s\n", yamlScalar(w))
+	}
+	b.WriteString("---\n\n")
+
 	fmt.Fprintf(&b, "# %s\n\n", name)
 	fmt.Fprintf(&b, "> Auto-generated skill file for `%s` v%s\n", name, ver)
 	fmt.Fprintf(&b, "> Re-generate with: `%s skill` or `acli skill --bin %s`\n\n", name, name)
 	b.WriteString("## Available commands\n\n")
-	for _, cmd := range tree.Commands {
-		if _, skip := builtinCommands[cmd.Name]; skip {
-			continue
-		}
+	for _, cmd := range userCommands {
 		tag := skillIdemTag(cmd)
 		fmt.Fprintf(&b, "- `%s %s` — %s%s\n", name, cmd.Name, cmd.Description, tag)
 	}
 	b.WriteString("\n")
-	for _, cmd := range tree.Commands {
-		if _, skip := builtinCommands[cmd.Name]; skip {
-			continue
-		}
+	for _, cmd := range userCommands {
 		fmt.Fprintf(&b, "## `%s %s`\n\n", name, cmd.Name)
 		if cmd.Description != "" {
 			b.WriteString(cmd.Description + "\n\n")
@@ -97,6 +127,55 @@ func GenerateSkill(tree *CommandTree, path string) (string, error) {
 		}
 	}
 	return content, nil
+}
+
+func collapseWS(s string) string {
+	return strings.Join(strings.Fields(s), " ")
+}
+
+var yamlReservedStart = map[byte]bool{
+	'!': true, '&': true, '*': true, '?': true, '|': true, '>': true,
+	'\'': true, '"': true, '%': true, '@': true, '`': true, '#': true,
+	',': true, '[': true, ']': true, '{': true, '}': true, '-': true,
+	':': true,
+}
+
+// yamlScalar renders a value safe for a single-line YAML block mapping value.
+func yamlScalar(value string) string {
+	if value == "" {
+		return `""`
+	}
+	first := value[0]
+	needsQuoting := strings.Contains(value, ": ") ||
+		strings.Contains(value, " #") ||
+		yamlReservedStart[first] ||
+		strings.HasSuffix(value, ":") ||
+		strings.TrimSpace(value) != value
+	if !needsQuoting {
+		return value
+	}
+	escaped := strings.ReplaceAll(value, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+	return `"` + escaped + `"`
+}
+
+func defaultSkillDescription(name string, userCommands []CommandInfo) string {
+	if len(userCommands) == 0 {
+		return fmt.Sprintf("Invoke the `%s` CLI.", name)
+	}
+	n := len(userCommands)
+	if n > 4 {
+		n = 4
+	}
+	names := make([]string, n)
+	for i := 0; i < n; i++ {
+		names[i] = userCommands[i].Name
+	}
+	suffix := ""
+	if len(userCommands) > 4 {
+		suffix = "…"
+	}
+	return fmt.Sprintf("Invoke the `%s` CLI. Commands: %s%s", name, strings.Join(names, ", "), suffix)
 }
 
 func skillIdemTag(cmd CommandInfo) string {

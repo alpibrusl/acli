@@ -1,17 +1,73 @@
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Acli;
+
+/// <summary>
+/// Options forwarded into the SKILL.md frontmatter (agentskills.io).
+/// </summary>
+public sealed record SkillOptions
+{
+    public string? Description { get; init; }
+    public string? WhenToUse { get; init; }
+}
 
 public static class Skill
 {
     static readonly HashSet<string> Builtin = new() { "introspect", "version", "skill" };
 
-    public static string Generate(CommandTree tree, string? path)
+    static readonly HashSet<char> YamlReservedStart = new()
+    {
+        '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',',
+        '[', ']', '{', '}', '-', ':',
+    };
+
+    /// <summary>Render a scalar safe for a single-line YAML block mapping value.</summary>
+    internal static string YamlScalar(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "\"\"";
+        var needsQuoting =
+            value.Contains(": ") ||
+            value.Contains(" #") ||
+            YamlReservedStart.Contains(value[0]) ||
+            value.EndsWith(':') ||
+            value.Trim() != value;
+        if (!needsQuoting)
+            return value;
+        var escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        return $"\"{escaped}\"";
+    }
+
+    public static string Generate(CommandTree tree, string? path) =>
+        Generate(tree, path, new SkillOptions());
+
+    /// <summary>
+    /// Generate a SKILL.md file conforming to the agentskills.io open standard
+    /// (https://agentskills.io): YAML frontmatter + ACLI body.
+    /// </summary>
+    public static string Generate(CommandTree tree, string? path, SkillOptions opts)
     {
         var name = tree.Name;
         var ver = tree.Version;
+
+        var userCommands = tree.Commands.Where(c => !Builtin.Contains(c.Name)).ToList();
+
+        var description = !string.IsNullOrEmpty(opts.Description)
+            ? CollapseWs(opts.Description!)
+            : DefaultDescription(name, userCommands);
+
         var b = new StringBuilder();
+        b.Append("---\n");
+        b.Append($"name: {YamlScalar(name)}\n");
+        b.Append($"description: {YamlScalar(description)}\n");
+        if (!string.IsNullOrEmpty(opts.WhenToUse))
+        {
+            b.Append($"when_to_use: {YamlScalar(CollapseWs(opts.WhenToUse!))}\n");
+        }
+        b.Append("---\n\n");
+
         b.AppendLine($"# {name}");
         b.AppendLine();
         b.AppendLine($"> Auto-generated skill file for `{name}` v{ver}");
@@ -19,13 +75,13 @@ public static class Skill
         b.AppendLine();
         b.AppendLine("## Available commands");
         b.AppendLine();
-        foreach (var cmd in tree.Commands.Where(c => !Builtin.Contains(c.Name)))
+        foreach (var cmd in userCommands)
         {
             var tag = IdemTag(cmd);
             b.AppendLine($"- `{name} {cmd.Name}` — {cmd.Description}{tag}");
         }
         b.AppendLine();
-        foreach (var cmd in tree.Commands.Where(c => !Builtin.Contains(c.Name)))
+        foreach (var cmd in userCommands)
         {
             b.AppendLine($"## `{name} {cmd.Name}`");
             b.AppendLine();
@@ -111,6 +167,18 @@ public static class Skill
             File.WriteAllText(path, content);
         }
         return content;
+    }
+
+    static string CollapseWs(string s) =>
+        Regex.Replace(s.Trim(), @"\s+", " ");
+
+    static string DefaultDescription(string name, List<CommandInfo> userCommands)
+    {
+        if (userCommands.Count == 0)
+            return $"Invoke the `{name}` CLI.";
+        var shown = userCommands.Take(4).Select(c => c.Name);
+        var suffix = userCommands.Count > 4 ? "…" : "";
+        return $"Invoke the `{name}` CLI. Commands: {string.Join(", ", shown)}{suffix}";
     }
 
     static string IdemTag(CommandInfo cmd)

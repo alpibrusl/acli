@@ -1,8 +1,11 @@
-"""Generate SKILLS.md files from ACLI command trees.
+"""Generate SKILL.md files from ACLI command trees.
 
-Bridges Stage 2 (SKILLS.md) and Stage 3 (ACLI) — an ACLI tool can auto-generate
-a skill file so agents have immediate context without needing to run --help first.
-The skill file is always re-generable from the source of truth (the tool itself).
+Emits a file conforming to the agentskills.io open standard
+(https://agentskills.io): YAML frontmatter (``name``, ``description``, optional
+``when_to_use``) followed by the ACLI command reference body. The generated
+file drops into ``.claude/skills/<tool>/SKILL.md``,
+``.cursor/skills/<tool>/SKILL.md``, Gemini CLI, Codex, etc. without
+modification.
 """
 
 from __future__ import annotations
@@ -29,16 +32,61 @@ _ERROR_SECTION = (
 )
 
 
+def _default_description(name: str, user_commands: list[dict[str, Any]]) -> str:
+    if not user_commands:
+        return f"Invoke the `{name}` CLI."
+    shown = [c["name"] for c in user_commands[:4]]
+    suffix = "…" if len(user_commands) > 4 else ""
+    return f"Invoke the `{name}` CLI. Commands: {', '.join(shown)}{suffix}"
+
+
+def _one_line(value: str) -> str:
+    return " ".join(value.split())
+
+
+# YAML indicators that, when a scalar starts with them, require quoting.
+_YAML_RESERVED_START = ("!", "&", "*", "?", "|", ">", "'", '"', "%", "@", "`", "#", ",", "[", "]", "{", "}", "-", ":")
+
+
+def _yaml_scalar(value: str) -> str:
+    """Render a scalar safe for a single-line YAML block mapping value.
+
+    Double-quotes the value when it contains constructs that would make a
+    strict YAML parser reject the plain form — in particular ``": "`` (which
+    looks like a nested mapping) and comment-introducing `` # ``. Backslash
+    and double-quote are escaped inside the quoted form.
+    """
+    if not value:
+        return '""'
+    needs_quoting = (
+        ": " in value
+        or " #" in value
+        or value[0] in _YAML_RESERVED_START
+        or value[-1] == ":"
+        or value.strip() != value
+    )
+    if not needs_quoting:
+        return value
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 def generate_skill(
     command_tree: dict[str, Any],
     *,
     target_path: Path | None = None,
+    description: str | None = None,
+    when_to_use: str | None = None,
 ) -> str:
-    """Generate a SKILLS.md file from an ACLI command tree.
+    """Generate a SKILL.md file from an ACLI command tree.
 
     Args:
-        command_tree: The full command tree from introspect/build_command_tree.
+        command_tree: Full command tree (as produced by ``build_command_tree``).
         target_path: If provided, write the skill file to this path.
+        description: Frontmatter ``description``. When omitted, synthesised
+            from the tool name and its first few user-facing commands.
+        when_to_use: Optional frontmatter ``when_to_use``. Only rendered when
+            explicitly supplied.
 
     Returns:
         The generated skill file content as a string.
@@ -46,8 +94,20 @@ def generate_skill(
     name = command_tree.get("name", "tool")
     version = command_tree.get("version", "0.0.0")
     commands = command_tree.get("commands", [])
+    user_commands = [c for c in commands if c["name"] not in _BUILTIN_COMMANDS]
 
-    lines: list[str] = []
+    desc = _one_line(description) if description else _default_description(name, user_commands)
+
+    lines: list[str] = [
+        "---",
+        f"name: {_yaml_scalar(name)}",
+        f"description: {_yaml_scalar(desc)}",
+    ]
+    if when_to_use:
+        lines.append(f"when_to_use: {_yaml_scalar(_one_line(when_to_use))}")
+    lines.append("---")
+    lines.append("")
+
     lines.append(f"# {name}")
     lines.append("")
     lines.append(f"> Auto-generated skill file for `{name}` v{version}")
@@ -57,16 +117,15 @@ def generate_skill(
     # Quick reference
     lines.append("## Available commands")
     lines.append("")
-    user_commands = [c for c in commands if c["name"] not in _BUILTIN_COMMANDS]
     for cmd in user_commands:
-        desc = cmd.get("description", "")
+        cmd_desc = cmd.get("description", "")
         idem = cmd.get("idempotent")
         idem_tag = ""
         if idem is True:
             idem_tag = " (idempotent)"
         elif idem == "conditional":
             idem_tag = " (conditionally idempotent)"
-        lines.append(f"- `{name} {cmd['name']}` — {desc}{idem_tag}")
+        lines.append(f"- `{name} {cmd['name']}` — {cmd_desc}{idem_tag}")
     lines.append("")
 
     # Detailed usage per command

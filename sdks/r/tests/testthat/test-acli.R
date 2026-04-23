@@ -27,3 +27,75 @@ test_that("handle error returns code", {
   code <- acli_handle_error(app, list(code = 3L, message = "gone", command = "run"))
   expect_equal(code, 3L)
 })
+
+sample_skill_tree <- function() {
+  list(
+    name = "noether", version = "1.0.0", acli_version = "0.1.0",
+    commands = list(
+      list(name = "run", description = "Run a pipeline", idempotent = FALSE),
+      list(name = "introspect", description = "Introspect"),
+      list(name = "version", description = "Version"),
+      list(name = "skill", description = "Skill")
+    )
+  )
+}
+
+test_that("skill emits default frontmatter", {
+  content <- acli_skill_generate(sample_skill_tree())
+  expect_true(startsWith(content, "---\n"))
+  lines <- strsplit(content, "\n", fixed = TRUE)[[1]]
+  expect_equal(lines[2], "name: noether")
+  expect_true(startsWith(lines[3], "description: "))
+  expect_true(grepl("noether", lines[3], fixed = TRUE))
+  # No when_to_use in the frontmatter block by default.
+  closing_idx <- which(lines == "---")[2]
+  expect_true(closing_idx > 0)
+  fm_block <- lines[seq_len(closing_idx)]
+  expect_false(any(startsWith(fm_block, "when_to_use:")))
+})
+
+test_that("skill emits explicit frontmatter", {
+  content <- acli_skill_generate(
+    sample_skill_tree(),
+    description = "Run Noether pipelines.",
+    when_to_use = "Use when deploying."
+  )
+  expect_true(grepl("description: Run Noether pipelines.", content, fixed = TRUE))
+  expect_true(grepl("when_to_use: Use when deploying.", content, fixed = TRUE))
+})
+
+test_that("skill collapses newlines in frontmatter values", {
+  content <- acli_skill_generate(
+    sample_skill_tree(),
+    description = "Line 1\nLine 2"
+  )
+  expect_true(grepl("description: Line 1 Line 2", content, fixed = TRUE))
+})
+
+test_that("skill quotes default description (colon-space) for strict YAML", {
+  content <- acli_skill_generate(sample_skill_tree())
+  lines <- strsplit(content, "\n", fixed = TRUE)[[1]]
+  expect_true(startsWith(lines[3], 'description: "'))
+  expect_true(endsWith(lines[3], '"'))
+})
+
+test_that("skill escapes user YAML specials", {
+  content <- acli_skill_generate(
+    sample_skill_tree(),
+    description = 'Usage: foo; see "bar" --- for details',
+    when_to_use = "has # and : both"
+  )
+  expect_true(grepl(
+    'description: "Usage: foo; see \\"bar\\" --- for details"',
+    content, fixed = TRUE
+  ))
+  expect_true(grepl('when_to_use: "has # and : both"', content, fixed = TRUE))
+})
+
+test_that("skill leaves plain values unquoted", {
+  content <- acli_skill_generate(
+    sample_skill_tree(),
+    description = "Run Noether pipelines."
+  )
+  expect_true(grepl("description: Run Noether pipelines.", content, fixed = TRUE))
+})

@@ -70,7 +70,7 @@ The SDK wraps Typer to enforce the ACLI spec automatically:
 - **`errors.py`** — `ACLIError` hierarchy (`InvalidArgsError`, `NotFoundError`, `ConflictError`, `PreconditionError`) + `suggest_flag()` for typo correction
 - **`introspect.py`** — `build_command_tree()` extracts the full command tree from a Typer app via reflection
 - **`cli_folder.py`** — `generate_cli_folder()` writes the `.cli/` reference folder
-- **`skill.py`** — `generate_skill()` generates SKILLS.md from command tree for agent bootstrapping
+- **`skill.py`** — `generate_skill()` generates `SKILL.md` (agentskills.io open standard) from command tree for agent bootstrapping
 - **`cli.py`** — The `acli` meta-CLI: `validate` (with `--deep`), `skill`, `init` commands. Uses templates from `templates/` for scaffolding
 
 ### Linting conventions

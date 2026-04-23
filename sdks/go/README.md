@@ -2,7 +2,7 @@
 
 Go module for the [ACLI (Agent-friendly CLI) specification](../../ACLI_SPEC.md).
 
-Core types: JSON envelopes, semantic exit codes, `.cli/` generation, SKILLS.md, `App` helpers. Pair with [Cobra](https://github.com/spf13/cobra) (or any CLI router) for commands.
+Core types: JSON envelopes, semantic exit codes, `.cli/` generation, `SKILL.md` ([agentskills.io](https://agentskills.io)), `App` helpers. Pair with [Cobra](https://github.com/spf13/cobra) (or any CLI router) for commands.
 
 ## Usage
 

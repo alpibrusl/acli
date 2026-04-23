@@ -6,7 +6,7 @@ use acli::errors::{invalid_args, not_found, suggest_flag, AcliError};
 use acli::exit_codes::ExitCode;
 use acli::introspect::{CommandInfo, CommandTree};
 use acli::output::{error_envelope, success_envelope, CacheMeta, OutputFormat};
-use acli::skill::generate_skill;
+use acli::skill::{generate_skill, generate_skill_with, SkillOptions};
 use serde_json::json;
 use std::time::Instant;
 use tempfile::TempDir;
@@ -362,7 +362,7 @@ fn test_generate_skill() {
 fn test_skill_write_to_file() {
     let dir = TempDir::new().unwrap();
     let tree = sample_tree();
-    let path = dir.path().join("SKILLS.md");
+    let path = dir.path().join("SKILL.md");
     let content = generate_skill(&tree, Some(&path)).unwrap();
 
     assert!(path.exists());
@@ -386,6 +386,73 @@ fn test_skill_excludes_builtins() {
     assert!(!available.contains("`noether introspect`"));
     assert!(!available.contains("`noether version`"));
     assert!(available.contains("`noether run`"));
+}
+
+#[test]
+fn test_skill_default_frontmatter() {
+    let content = generate_skill(&sample_tree(), None).unwrap();
+    assert!(content.starts_with("---\n"));
+    let lines: Vec<&str> = content.lines().collect();
+    assert_eq!(lines[1], "name: noether");
+    assert!(lines[2].starts_with("description: "));
+    assert!(lines[2].contains("noether"));
+    let closing = 1 + lines[1..].iter().position(|l| *l == "---").unwrap();
+    for line in &lines[..=closing] {
+        assert!(!line.starts_with("when_to_use:"));
+    }
+    assert_eq!(lines[closing + 1], "");
+    assert_eq!(lines[closing + 2], "# noether");
+}
+
+#[test]
+fn test_skill_explicit_frontmatter() {
+    let opts = SkillOptions {
+        description: Some("Run Noether pipelines.".into()),
+        when_to_use: Some("Use when deploying.".into()),
+    };
+    let content = generate_skill_with(&sample_tree(), None, &opts).unwrap();
+    assert!(content.contains("description: Run Noether pipelines."));
+    assert!(content.contains("when_to_use: Use when deploying."));
+}
+
+#[test]
+fn test_skill_collapses_newlines() {
+    let opts = SkillOptions {
+        description: Some("Line 1\nLine 2".into()),
+        when_to_use: None,
+    };
+    let content = generate_skill_with(&sample_tree(), None, &opts).unwrap();
+    assert!(content.contains("description: Line 1 Line 2"));
+}
+
+#[test]
+fn test_skill_quotes_default_description() {
+    // Default description contains "Commands: " (colon-space); must be quoted.
+    let content = generate_skill(&sample_tree(), None).unwrap();
+    let lines: Vec<&str> = content.lines().collect();
+    assert!(lines[2].starts_with("description: \""));
+    assert!(lines[2].ends_with("\""));
+}
+
+#[test]
+fn test_skill_escapes_user_values_with_yaml_specials() {
+    let opts = SkillOptions {
+        description: Some("Usage: foo; see \"bar\" --- for details".into()),
+        when_to_use: Some("has # and : both".into()),
+    };
+    let content = generate_skill_with(&sample_tree(), None, &opts).unwrap();
+    assert!(content.contains("description: \"Usage: foo; see \\\"bar\\\" --- for details\""));
+    assert!(content.contains("when_to_use: \"has # and : both\""));
+}
+
+#[test]
+fn test_skill_leaves_plain_values_unquoted() {
+    let opts = SkillOptions {
+        description: Some("Run Noether pipelines.".into()),
+        when_to_use: None,
+    };
+    let content = generate_skill_with(&sample_tree(), None, &opts).unwrap();
+    assert!(content.contains("description: Run Noether pipelines."));
 }
 
 // ── AcliApp ──────────────────────────────────────────────────────────────────

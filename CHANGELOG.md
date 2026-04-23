@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- **All SDKs**: the `skill` subcommand now emits `SKILL.md` (singular) with
+  YAML frontmatter conforming to the [agentskills.io](https://agentskills.io)
+  open standard. The previous `SKILLS.md` filename is no longer produced.
+  Generated files drop directly into `.claude/skills/<tool>/SKILL.md`,
+  `.cursor/skills/<tool>/SKILL.md`, Gemini CLI, Codex, and other
+  agentskills-compatible tools.
+- **All SDKs**: `generate_skill` (and language-equivalent) gained
+  `description` / `when_to_use` parameters; `ACLIApp` (and equivalents)
+  gained `skill_description` / `skill_when_to_use` constructor fields that
+  thread into the built-in `skill` subcommand. No backwards-compatibility
+  shims for the old filename.
+- **All SDKs**: frontmatter scalar values that contain YAML-ambiguous
+  characters (`: `, ` #`, leading reserved indicators, trailing `:`) are
+  now emitted double-quoted with `\\` and `"` escaped. The synthesised
+  default description contains `Commands: …`, so it is always quoted —
+  strict YAML parsers accept the output.
+- **Spec**: new §1.4 `SKILL.md` bridge section; evolution diagram renamed
+  `SKILLS.md` → `SKILL.md`.
+
+**To migrate:** run `<tool> skill --out SKILL.md` to emit the new file,
+delete any committed `SKILLS.md`, and commit the replacement. No other
+action is needed — downstream agentskills.io-compatible tools read the
+new file directly.
+
 ## [0.4.0] - 2026-04-06
 
 ### Added

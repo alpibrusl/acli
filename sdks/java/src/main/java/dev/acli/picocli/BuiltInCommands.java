@@ -70,7 +70,7 @@ public final class BuiltInCommands {
         }
     }
 
-    @Command(name = "skill", description = "Generate a SKILLS.md file for agent bootstrapping.")
+    @Command(name = "skill", description = "Generate a SKILL.md (agentskills.io) file for agent bootstrapping.")
     public static final class Skill implements Callable<Integer> {
 
         private final AcliApp app;

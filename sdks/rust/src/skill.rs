@@ -1,4 +1,8 @@
-//! Generate SKILLS.md files from ACLI command trees.
+//! Generate SKILL.md files from ACLI command trees.
+//!
+//! Emits a file conforming to the agentskills.io open standard
+//! (<https://agentskills.io>): YAML frontmatter (`name`, `description`,
+//! optional `when_to_use`) followed by the ACLI command reference body.
 
 use crate::introspect::CommandTree;
 use std::fs;
@@ -6,11 +10,86 @@ use std::path::Path;
 
 const BUILTIN_COMMANDS: &[&str] = &["introspect", "version", "skill"];
 
-/// Generate a SKILLS.md file from an ACLI command tree.
+/// Options forwarded into the SKILL.md frontmatter.
+#[derive(Default, Clone, Debug)]
+pub struct SkillOptions {
+    pub description: Option<String>,
+    pub when_to_use: Option<String>,
+}
+
+fn collapse_ws(s: &str) -> String {
+    s.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+const YAML_RESERVED_START: &[char] = &[
+    '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',', '[', ']', '{', '}', '-', ':',
+];
+
+/// Render a scalar safe for a single-line YAML block mapping value.
+fn yaml_scalar(value: &str) -> String {
+    if value.is_empty() {
+        return "\"\"".to_string();
+    }
+    let first = value.chars().next().unwrap();
+    let needs_quoting = value.contains(": ")
+        || value.contains(" #")
+        || YAML_RESERVED_START.contains(&first)
+        || value.ends_with(':')
+        || value.trim() != value;
+    if !needs_quoting {
+        return value.to_string();
+    }
+    let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
+    format!("\"{escaped}\"")
+}
+
+fn default_description(name: &str, user_commands: &[&crate::introspect::CommandInfo]) -> String {
+    if user_commands.is_empty() {
+        return format!("Invoke the `{name}` CLI.");
+    }
+    let shown: Vec<&str> = user_commands.iter().take(4).map(|c| c.name.as_str()).collect();
+    let suffix = if user_commands.len() > 4 { "…" } else { "" };
+    format!(
+        "Invoke the `{name}` CLI. Commands: {}{suffix}",
+        shown.join(", ")
+    )
+}
+
+/// Generate a SKILL.md file from an ACLI command tree (default options).
 pub fn generate_skill(tree: &CommandTree, target_path: Option<&Path>) -> std::io::Result<String> {
+    generate_skill_with(tree, target_path, &SkillOptions::default())
+}
+
+/// Generate a SKILL.md file with caller-supplied frontmatter options.
+pub fn generate_skill_with(
+    tree: &CommandTree,
+    target_path: Option<&Path>,
+    opts: &SkillOptions,
+) -> std::io::Result<String> {
     let name = &tree.name;
     let version = &tree.version;
     let mut lines = Vec::new();
+
+    let user_commands: Vec<_> = tree
+        .commands
+        .iter()
+        .filter(|c| !BUILTIN_COMMANDS.contains(&c.name.as_str()))
+        .collect();
+
+    let description = opts
+        .description
+        .as_ref()
+        .map(|d| collapse_ws(d))
+        .unwrap_or_else(|| default_description(name, &user_commands));
+
+    lines.push("---".to_string());
+    lines.push(format!("name: {}", yaml_scalar(name)));
+    lines.push(format!("description: {}", yaml_scalar(&description)));
+    if let Some(w) = &opts.when_to_use {
+        lines.push(format!("when_to_use: {}", yaml_scalar(&collapse_ws(w))));
+    }
+    lines.push("---".to_string());
+    lines.push(String::new());
 
     lines.push(format!("# {name}"));
     lines.push(String::new());
@@ -25,12 +104,6 @@ pub fn generate_skill(tree: &CommandTree, target_path: Option<&Path>) -> std::io
     // Quick reference
     lines.push("## Available commands".to_string());
     lines.push(String::new());
-
-    let user_commands: Vec<_> = tree
-        .commands
-        .iter()
-        .filter(|c| !BUILTIN_COMMANDS.contains(&c.name.as_str()))
-        .collect();
 
     for cmd in &user_commands {
         let idem_tag = match cmd.idempotent.as_ref().and_then(|v| v.as_bool()) {

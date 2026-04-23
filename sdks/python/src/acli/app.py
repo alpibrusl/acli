@@ -30,11 +30,15 @@ class ACLIApp:
         version: str,
         *,
         cli_dir: Path | None = None,
+        skill_description: str | None = None,
+        skill_when_to_use: str | None = None,
         **typer_kwargs: Any,
     ) -> None:
         self.name = name
         self.version = version
         self.cli_dir = cli_dir
+        self.skill_description = skill_description
+        self.skill_when_to_use = skill_when_to_use
         self._typer = typer.Typer(name=name, help=typer_kwargs.pop("help", None), **typer_kwargs)
         self._register_introspect()
         self._register_version()
@@ -139,10 +143,15 @@ class ACLIApp:
                 help="Output format. type:enum[text|json|table]",
             ),
         ) -> None:
-            """Generate a SKILLS.md file for agent bootstrapping."""
+            """Generate a SKILL.md (agentskills.io) file for agent bootstrapping."""
             tree = self.get_command_tree()
             target = Path(out) if out else None
-            content = generate_skill(tree, target_path=target)
+            content = generate_skill(
+                tree,
+                target_path=target,
+                description=self.skill_description,
+                when_to_use=self.skill_when_to_use,
+            )
 
             if output == OutputFormat.json:
                 data = {"path": str(target) if target else None, "content": content}

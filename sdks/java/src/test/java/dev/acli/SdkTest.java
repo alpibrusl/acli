@@ -82,6 +82,81 @@ class SdkTest {
     }
 
     @Test
+    void skillEmitsDefaultFrontmatter() throws Exception {
+        CommandTree tree = new CommandTree("noether", "1.0.0");
+        tree.addCommand(new CommandInfo("run", "Run a pipeline"));
+        String md = Skill.generateSkill(tree);
+        assertTrue(md.startsWith("---\n"), "expected frontmatter, got: " + md.substring(0, 40));
+        String[] lines = md.split("\n");
+        assertEquals("name: noether", lines[1]);
+        assertTrue(lines[2].startsWith("description: "), "got: " + lines[2]);
+        int closing = -1;
+        for (int i = 1; i < lines.length; i++) {
+            if ("---".equals(lines[i])) {
+                closing = i;
+                break;
+            }
+        }
+        assertTrue(closing > 0, "no closing ---");
+        for (int i = 0; i <= closing; i++) {
+            assertFalse(lines[i].startsWith("when_to_use:"), "unexpected when_to_use");
+        }
+        assertEquals("", lines[closing + 1]);
+        assertEquals("# noether", lines[closing + 2]);
+    }
+
+    @Test
+    void skillEmitsExplicitFrontmatter() throws Exception {
+        CommandTree tree = new CommandTree("noether", "1.0.0");
+        tree.addCommand(new CommandInfo("run", "Run"));
+        Skill.Options opts = new Skill.Options("Run Noether pipelines.", "Use when deploying.");
+        String md = Skill.generateSkill(tree, null, opts);
+        assertTrue(md.contains("description: Run Noether pipelines."), md);
+        assertTrue(md.contains("when_to_use: Use when deploying."), md);
+    }
+
+    @Test
+    void skillCollapsesNewlines() throws Exception {
+        CommandTree tree = new CommandTree("noether", "1.0.0");
+        tree.addCommand(new CommandInfo("run", "Run"));
+        Skill.Options opts = new Skill.Options("Line 1\nLine 2", null);
+        String md = Skill.generateSkill(tree, null, opts);
+        assertTrue(md.contains("description: Line 1 Line 2"), md);
+    }
+
+    @Test
+    void skillQuotesDefaultDescription() throws Exception {
+        // Default description contains ": " (colon-space); must be quoted.
+        CommandTree tree = new CommandTree("noether", "1.0.0");
+        tree.addCommand(new CommandInfo("run", "Run"));
+        String md = Skill.generateSkill(tree);
+        String[] lines = md.split("\n");
+        assertTrue(lines[2].startsWith("description: \""), lines[2]);
+        assertTrue(lines[2].endsWith("\""), lines[2]);
+    }
+
+    @Test
+    void skillEscapesUserYamlSpecials() throws Exception {
+        CommandTree tree = new CommandTree("noether", "1.0.0");
+        tree.addCommand(new CommandInfo("run", "Run"));
+        Skill.Options opts = new Skill.Options(
+                "Usage: foo; see \"bar\" --- for details",
+                "has # and : both");
+        String md = Skill.generateSkill(tree, null, opts);
+        assertTrue(md.contains("description: \"Usage: foo; see \\\"bar\\\" --- for details\""), md);
+        assertTrue(md.contains("when_to_use: \"has # and : both\""), md);
+    }
+
+    @Test
+    void skillLeavesPlainValuesUnquoted() throws Exception {
+        CommandTree tree = new CommandTree("noether", "1.0.0");
+        tree.addCommand(new CommandInfo("run", "Run"));
+        Skill.Options opts = new Skill.Options("Run Noether pipelines.", null);
+        String md = Skill.generateSkill(tree, null, opts);
+        assertTrue(md.contains("description: Run Noether pipelines."), md);
+    }
+
+    @Test
     void acliAppHandleIntrospectWritesJson(@TempDir Path tmp) {
         AcliApp app = new AcliApp("myapp", "0.1.0").withCliDir(tmp);
         CommandInfo greet = new CommandInfo("greet", "Say hi");
