@@ -137,6 +137,7 @@ var yamlReservedStart = map[byte]bool{
 	'!': true, '&': true, '*': true, '?': true, '|': true, '>': true,
 	'\'': true, '"': true, '%': true, '@': true, '`': true, '#': true,
 	',': true, '[': true, ']': true, '{': true, '}': true, '-': true,
+	':': true,
 }
 
 // yamlScalar renders a value safe for a single-line YAML block mapping value.

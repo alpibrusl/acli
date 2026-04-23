@@ -22,7 +22,7 @@ fn collapse_ws(s: &str) -> String {
 }
 
 const YAML_RESERVED_START: &[char] = &[
-    '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',', '[', ']', '{', '}', '-',
+    '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',', '[', ']', '{', '}', '-', ':',
 ];
 
 /// Render a scalar safe for a single-line YAML block mapping value.

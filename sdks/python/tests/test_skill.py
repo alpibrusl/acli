@@ -229,3 +229,8 @@ class TestGenerateSkill:
         content = generate_skill(_sample_tree(), description="Run Noether pipelines.")
         assert "description: Run Noether pipelines." in content
         assert 'description: "Run Noether pipelines."' not in content
+
+    def test_frontmatter_quotes_leading_colon(self) -> None:
+        """A value starting with `:` is ambiguous (nested mapping indicator)."""
+        content = generate_skill(_sample_tree(), description=":leading colon")
+        assert 'description: ":leading colon"' in content

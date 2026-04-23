@@ -45,7 +45,7 @@ def _one_line(value: str) -> str:
 
 
 # YAML indicators that, when a scalar starts with them, require quoting.
-_YAML_RESERVED_START = ("!", "&", "*", "?", "|", ">", "'", '"', "%", "@", "`", "#", ",", "[", "]", "{", "}", "-")
+_YAML_RESERVED_START = ("!", "&", "*", "?", "|", ">", "'", '"', "%", "@", "`", "#", ",", "[", "]", "{", "}", "-", ":")
 
 
 def _yaml_scalar(value: str) -> str:

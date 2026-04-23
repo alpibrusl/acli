@@ -20,7 +20,7 @@ public static class Skill
     static readonly HashSet<char> YamlReservedStart = new()
     {
         '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',',
-        '[', ']', '{', '}', '-',
+        '[', ']', '{', '}', '-', ':',
     };
 
     /// <summary>Render a scalar safe for a single-line YAML block mapping value.</summary>

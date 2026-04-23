@@ -24,7 +24,7 @@ public final class Skill {
 
     private static final Set<Character> YAML_RESERVED_START =
             Set.of('!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',',
-                    '[', ']', '{', '}', '-');
+                    '[', ']', '{', '}', '-', ':');
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 

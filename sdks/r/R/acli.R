@@ -140,7 +140,7 @@ acli__collapse_ws <- function(s) {
 acli__yaml_scalar <- function(value) {
   if (is.null(value) || !nzchar(value)) return('""')
   reserved <- c("!", "&", "*", "?", "|", ">", "'", '"', "%", "@", "`", "#",
-                ",", "[", "]", "{", "}", "-")
+                ",", "[", "]", "{", "}", "-", ":")
   first <- substr(value, 1, 1)
   needs_quoting <- grepl(": ", value, fixed = TRUE) ||
     grepl(" #", value, fixed = TRUE) ||

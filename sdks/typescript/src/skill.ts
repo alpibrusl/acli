@@ -22,7 +22,7 @@ function oneLine(value: string): string {
 }
 
 const YAML_RESERVED_START = new Set([
-  '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',', '[', ']', '{', '}', '-',
+  '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',', '[', ']', '{', '}', '-', ':',
 ]);
 
 /** Render a scalar safe for a single-line YAML block mapping value. */
