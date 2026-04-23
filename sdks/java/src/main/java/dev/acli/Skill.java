@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Generate SKILL.md files from ACLI command trees.
@@ -20,6 +21,30 @@ public final class Skill {
 
     private static final Set<String> BUILTIN =
             Set.of("introspect", "version", "skill");
+
+    private static final Set<Character> YAML_RESERVED_START =
+            Set.of('!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',',
+                    '[', ']', '{', '}', '-');
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    /** Render a scalar safe for a single-line YAML block mapping value. */
+    static String yamlScalar(String value) {
+        if (value == null || value.isEmpty()) {
+            return "\"\"";
+        }
+        boolean needsQuoting =
+                value.contains(": ")
+                        || value.contains(" #")
+                        || YAML_RESERVED_START.contains(value.charAt(0))
+                        || value.endsWith(":")
+                        || !value.strip().equals(value);
+        if (!needsQuoting) {
+            return value;
+        }
+        String escaped = value.replace("\\", "\\\\").replace("\"", "\\\"");
+        return "\"" + escaped + "\"";
+    }
 
     /** Options forwarded into the SKILL.md frontmatter. */
     public record Options(String description, String whenToUse) {
@@ -58,10 +83,10 @@ public final class Skill {
                         : defaultDescription(name, userCommands);
 
         lines.add("---");
-        lines.add("name: " + name);
-        lines.add("description: " + description);
+        lines.add("name: " + yamlScalar(name));
+        lines.add("description: " + yamlScalar(description));
         if (opts.whenToUse() != null && !opts.whenToUse().isEmpty()) {
-            lines.add("when_to_use: " + collapseWs(opts.whenToUse()));
+            lines.add("when_to_use: " + yamlScalar(collapseWs(opts.whenToUse())));
         }
         lines.add("---");
         lines.add("");
@@ -192,7 +217,7 @@ public final class Skill {
     }
 
     private static String collapseWs(String s) {
-        return s.trim().replaceAll("\\s+", " ");
+        return WHITESPACE.matcher(s.trim()).replaceAll(" ");
     }
 
     private static String defaultDescription(String name, List<CommandInfo> userCommands) {

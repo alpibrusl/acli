@@ -44,6 +44,33 @@ def _one_line(value: str) -> str:
     return " ".join(value.split())
 
 
+# YAML indicators that, when a scalar starts with them, require quoting.
+_YAML_RESERVED_START = ("!", "&", "*", "?", "|", ">", "'", '"', "%", "@", "`", "#", ",", "[", "]", "{", "}", "-")
+
+
+def _yaml_scalar(value: str) -> str:
+    """Render a scalar safe for a single-line YAML block mapping value.
+
+    Double-quotes the value when it contains constructs that would make a
+    strict YAML parser reject the plain form — in particular ``": "`` (which
+    looks like a nested mapping) and comment-introducing `` # ``. Backslash
+    and double-quote are escaped inside the quoted form.
+    """
+    if not value:
+        return '""'
+    needs_quoting = (
+        ": " in value
+        or " #" in value
+        or value[0] in _YAML_RESERVED_START
+        or value[-1] == ":"
+        or value.strip() != value
+    )
+    if not needs_quoting:
+        return value
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 def generate_skill(
     command_tree: dict[str, Any],
     *,
@@ -71,9 +98,13 @@ def generate_skill(
 
     desc = _one_line(description) if description else _default_description(name, user_commands)
 
-    lines: list[str] = ["---", f"name: {name}", f"description: {desc}"]
+    lines: list[str] = [
+        "---",
+        f"name: {_yaml_scalar(name)}",
+        f"description: {_yaml_scalar(desc)}",
+    ]
     if when_to_use:
-        lines.append(f"when_to_use: {_one_line(when_to_use)}")
+        lines.append(f"when_to_use: {_yaml_scalar(_one_line(when_to_use))}")
     lines.append("---")
     lines.append("")
 

@@ -285,6 +285,30 @@ describe('Skill', () => {
     const lines = content.split('\n');
     expect(lines).toContain('description: A B');
   });
+
+  it('quotes default description (contains colon-space) for strict YAML parsers', () => {
+    const content = generateSkill(sampleTree());
+    const lines = content.split('\n');
+    // Default description contains "Commands: " (colon-space) → must be quoted.
+    expect(lines[2].startsWith('description: "')).toBe(true);
+    expect(lines[2].endsWith('"')).toBe(true);
+  });
+
+  it('quotes and escapes user-supplied values that need it', () => {
+    const content = generateSkill(sampleTree(), undefined, {
+      description: 'Usage: foo; see "bar" --- for details',
+      whenToUse: 'has # and : both',
+    });
+    expect(content).toContain('description: "Usage: foo; see \\"bar\\" --- for details"');
+    expect(content).toContain('when_to_use: "has # and : both"');
+  });
+
+  it('leaves plain values unquoted', () => {
+    const content = generateSkill(sampleTree(), undefined, {
+      description: 'Run Noether pipelines.',
+    });
+    expect(content).toContain('description: Run Noether pipelines.');
+  });
 });
 
 // ── AcliApp ──────────────────────────────────────────────────────────────────

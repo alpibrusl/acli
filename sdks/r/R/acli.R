@@ -135,6 +135,24 @@ acli__collapse_ws <- function(s) {
   gsub("\\s+", " ", trimws(s))
 }
 
+#' Render a scalar safe for a single-line YAML block mapping value.
+#' @keywords internal
+acli__yaml_scalar <- function(value) {
+  if (is.null(value) || !nzchar(value)) return('""')
+  reserved <- c("!", "&", "*", "?", "|", ">", "'", '"', "%", "@", "`", "#",
+                ",", "[", "]", "{", "}", "-")
+  first <- substr(value, 1, 1)
+  needs_quoting <- grepl(": ", value, fixed = TRUE) ||
+    grepl(" #", value, fixed = TRUE) ||
+    first %in% reserved ||
+    endsWith(value, ":") ||
+    !identical(trimws(value), value)
+  if (!needs_quoting) return(value)
+  escaped <- gsub("\\", "\\\\", value, fixed = TRUE)
+  escaped <- gsub('"', '\\"', escaped, fixed = TRUE)
+  paste0('"', escaped, '"')
+}
+
 #' @keywords internal
 acli__default_skill_description <- function(name, user_commands) {
   if (length(user_commands) == 0) {
@@ -170,11 +188,11 @@ acli_skill_generate <- function(tree, path = NULL, description = NULL, when_to_u
 
   b <- character()
   b <- c(b, "---\n")
-  b <- c(b, sprintf("name: %s\n", name))
-  b <- c(b, sprintf("description: %s\n", desc))
+  b <- c(b, sprintf("name: %s\n", acli__yaml_scalar(name)))
+  b <- c(b, sprintf("description: %s\n", acli__yaml_scalar(desc)))
   wtu <- acli__collapse_ws(when_to_use)
   if (nzchar(wtu)) {
-    b <- c(b, sprintf("when_to_use: %s\n", wtu))
+    b <- c(b, sprintf("when_to_use: %s\n", acli__yaml_scalar(wtu)))
   }
   b <- c(b, "---\n\n")
 

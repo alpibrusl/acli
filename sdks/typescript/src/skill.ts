@@ -21,6 +21,24 @@ function oneLine(value: string): string {
   return value.split(/\s+/).filter(Boolean).join(' ');
 }
 
+const YAML_RESERVED_START = new Set([
+  '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',', '[', ']', '{', '}', '-',
+]);
+
+/** Render a scalar safe for a single-line YAML block mapping value. */
+function yamlScalar(value: string): string {
+  if (value === '') return '""';
+  const needsQuoting =
+    value.includes(': ') ||
+    value.includes(' #') ||
+    YAML_RESERVED_START.has(value[0]) ||
+    value.endsWith(':') ||
+    value.trim() !== value;
+  if (!needsQuoting) return value;
+  const escaped = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return `"${escaped}"`;
+}
+
 function defaultDescription(name: string, userCommands: CommandInfo[]): string {
   if (userCommands.length === 0) return `Invoke the \`${name}\` CLI.`;
   const shown = userCommands.slice(0, 4).map(c => c.name);
@@ -40,8 +58,12 @@ export function generateSkill(
     ? oneLine(options.description)
     : defaultDescription(name, userCommands);
 
-  const lines: string[] = ['---', `name: ${name}`, `description: ${description}`];
-  if (options.whenToUse) lines.push(`when_to_use: ${oneLine(options.whenToUse)}`);
+  const lines: string[] = [
+    '---',
+    `name: ${yamlScalar(name)}`,
+    `description: ${yamlScalar(description)}`,
+  ];
+  if (options.whenToUse) lines.push(`when_to_use: ${yamlScalar(oneLine(options.whenToUse))}`);
   lines.push('---', '');
 
   lines.push(`# ${name}`, '');

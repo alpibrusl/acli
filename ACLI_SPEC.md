@@ -149,6 +149,8 @@ when_to_use: Use when the user asks about weather, forecasts, or regional adviso
 
 ACLI does not redefine the frontmatter schema; any additional keys supported by agentskills.io (e.g. `allowed-tools`, `argument-hint`) MAY be passed through verbatim by SDK implementations but are not required.
 
+**Body section order (stable).** Below the frontmatter, the body is emitted in a fixed order: `# <name>` heading → regeneration blockquote → `## Available commands` → per-command detail sections (options, arguments, examples, see also) → `## Output format` → `## Exit codes` → `## Further discovery`. Tools that diff or index the emitted file can rely on this ordering being stable within a spec minor version.
+
 ---
 
 ## 2. Output Contracts

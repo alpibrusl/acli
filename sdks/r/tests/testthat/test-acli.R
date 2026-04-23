@@ -71,3 +71,31 @@ test_that("skill collapses newlines in frontmatter values", {
   )
   expect_true(grepl("description: Line 1 Line 2", content, fixed = TRUE))
 })
+
+test_that("skill quotes default description (colon-space) for strict YAML", {
+  content <- acli_skill_generate(sample_skill_tree())
+  lines <- strsplit(content, "\n", fixed = TRUE)[[1]]
+  expect_true(startsWith(lines[3], 'description: "'))
+  expect_true(endsWith(lines[3], '"'))
+})
+
+test_that("skill escapes user YAML specials", {
+  content <- acli_skill_generate(
+    sample_skill_tree(),
+    description = 'Usage: foo; see "bar" --- for details',
+    when_to_use = "has # and : both"
+  )
+  expect_true(grepl(
+    'description: "Usage: foo; see \\"bar\\" --- for details"',
+    content, fixed = TRUE
+  ))
+  expect_true(grepl('when_to_use: "has # and : both"', content, fixed = TRUE))
+})
+
+test_that("skill leaves plain values unquoted", {
+  content <- acli_skill_generate(
+    sample_skill_tree(),
+    description = "Run Noether pipelines."
+  )
+  expect_true(grepl("description: Run Noether pipelines.", content, fixed = TRUE))
+})

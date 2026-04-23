@@ -17,6 +17,29 @@ public static class Skill
 {
     static readonly HashSet<string> Builtin = new() { "introspect", "version", "skill" };
 
+    static readonly HashSet<char> YamlReservedStart = new()
+    {
+        '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',',
+        '[', ']', '{', '}', '-',
+    };
+
+    /// <summary>Render a scalar safe for a single-line YAML block mapping value.</summary>
+    internal static string YamlScalar(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "\"\"";
+        var needsQuoting =
+            value.Contains(": ") ||
+            value.Contains(" #") ||
+            YamlReservedStart.Contains(value[0]) ||
+            value.EndsWith(':') ||
+            value.Trim() != value;
+        if (!needsQuoting)
+            return value;
+        var escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        return $"\"{escaped}\"";
+    }
+
     public static string Generate(CommandTree tree, string? path) =>
         Generate(tree, path, new SkillOptions());
 
@@ -37,11 +60,11 @@ public static class Skill
 
         var b = new StringBuilder();
         b.Append("---\n");
-        b.Append($"name: {name}\n");
-        b.Append($"description: {description}\n");
+        b.Append($"name: {YamlScalar(name)}\n");
+        b.Append($"description: {YamlScalar(description)}\n");
         if (!string.IsNullOrEmpty(opts.WhenToUse))
         {
-            b.Append($"when_to_use: {CollapseWs(opts.WhenToUse!)}\n");
+            b.Append($"when_to_use: {YamlScalar(CollapseWs(opts.WhenToUse!))}\n");
         }
         b.Append("---\n\n");
 

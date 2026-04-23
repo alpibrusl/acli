@@ -200,3 +200,43 @@ class TestGenerateSkill:
         # blank line after closing, then heading
         assert lines[closing + 1] == ""
         assert lines[closing + 2] == "# noether"
+
+    def test_frontmatter_is_valid_yaml(self) -> None:
+        """The synthesised default contains `Commands: …` (colon-space).
+        Emit it as a quoted scalar so strict YAML parsers accept it.
+        """
+        import yaml
+
+        content = generate_skill(_sample_tree())
+        lines = content.splitlines()
+        closing = lines.index("---", 1)
+        block = "\n".join(lines[1:closing])
+        data = yaml.safe_load(block)
+        assert data["name"] == "noether"
+        assert "noether" in data["description"]
+        assert "run" in data["description"] or "status" in data["description"]
+
+    def test_frontmatter_yaml_escapes_user_values(self) -> None:
+        import yaml
+
+        content = generate_skill(
+            _sample_tree(),
+            description="Usage: foo; see \"bar\" --- for details",
+            when_to_use="has # and : both",
+        )
+        lines = content.splitlines()
+        closing = lines.index("---", 1)
+        block = "\n".join(lines[1:closing])
+        data = yaml.safe_load(block)
+        assert data["description"] == "Usage: foo; see \"bar\" --- for details"
+        assert data["when_to_use"] == "has # and : both"
+
+    def test_frontmatter_yaml_escapes_backslash(self) -> None:
+        import yaml
+
+        content = generate_skill(_sample_tree(), description="has \\ backslash")
+        lines = content.splitlines()
+        closing = lines.index("---", 1)
+        block = "\n".join(lines[1:closing])
+        data = yaml.safe_load(block)
+        assert data["description"] == "has \\ backslash"

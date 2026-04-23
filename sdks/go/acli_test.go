@@ -131,3 +131,43 @@ func TestSkillCollapsesNewlines(t *testing.T) {
 		t.Errorf("newlines not collapsed: %s", content[:200])
 	}
 }
+
+func TestSkillQuotesDefaultDescription(t *testing.T) {
+	content, err := GenerateSkill(sampleSkillTree(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(content, "\n")
+	if !strings.HasPrefix(lines[2], `description: "`) || !strings.HasSuffix(lines[2], `"`) {
+		t.Errorf("default description must be quoted, got %q", lines[2])
+	}
+}
+
+func TestSkillEscapesUserYAMLSpecials(t *testing.T) {
+	content, err := GenerateSkillWith(sampleSkillTree(), "", SkillOptions{
+		Description: `Usage: foo; see "bar" --- for details`,
+		WhenToUse:   "has # and : both",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `description: "Usage: foo; see \"bar\" --- for details"`
+	if !strings.Contains(content, want) {
+		t.Errorf("missing escaped description; got:\n%s", content[:300])
+	}
+	if !strings.Contains(content, `when_to_use: "has # and : both"`) {
+		t.Error("missing quoted when_to_use")
+	}
+}
+
+func TestSkillLeavesPlainValuesUnquoted(t *testing.T) {
+	content, err := GenerateSkillWith(sampleSkillTree(), "", SkillOptions{
+		Description: "Run Noether pipelines.",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(content, "description: Run Noether pipelines.") {
+		t.Error("plain value should be unquoted")
+	}
+}

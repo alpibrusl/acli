@@ -21,6 +21,28 @@ fn collapse_ws(s: &str) -> String {
     s.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+const YAML_RESERVED_START: &[char] = &[
+    '!', '&', '*', '?', '|', '>', '\'', '"', '%', '@', '`', '#', ',', '[', ']', '{', '}', '-',
+];
+
+/// Render a scalar safe for a single-line YAML block mapping value.
+fn yaml_scalar(value: &str) -> String {
+    if value.is_empty() {
+        return "\"\"".to_string();
+    }
+    let first = value.chars().next().unwrap();
+    let needs_quoting = value.contains(": ")
+        || value.contains(" #")
+        || YAML_RESERVED_START.contains(&first)
+        || value.ends_with(':')
+        || value.trim() != value;
+    if !needs_quoting {
+        return value.to_string();
+    }
+    let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
+    format!("\"{escaped}\"")
+}
+
 fn default_description(name: &str, user_commands: &[&crate::introspect::CommandInfo]) -> String {
     if user_commands.is_empty() {
         return format!("Invoke the `{name}` CLI.");
@@ -61,10 +83,10 @@ pub fn generate_skill_with(
         .unwrap_or_else(|| default_description(name, &user_commands));
 
     lines.push("---".to_string());
-    lines.push(format!("name: {name}"));
-    lines.push(format!("description: {description}"));
+    lines.push(format!("name: {}", yaml_scalar(name)));
+    lines.push(format!("description: {}", yaml_scalar(&description)));
     if let Some(w) = &opts.when_to_use {
-        lines.push(format!("when_to_use: {}", collapse_ws(w)));
+        lines.push(format!("when_to_use: {}", yaml_scalar(&collapse_ws(w))));
     }
     lines.push("---".to_string());
     lines.push(String::new());

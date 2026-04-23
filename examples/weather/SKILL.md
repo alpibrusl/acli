@@ -1,6 +1,6 @@
 ---
 name: weather
-description: Invoke the `weather` CLI. Commands: get, forecast, alerts, favorite…
+description: "Invoke the `weather` CLI. Commands: get, forecast, alerts, favorite…"
 ---
 
 # weather

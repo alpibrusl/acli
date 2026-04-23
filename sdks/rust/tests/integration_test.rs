@@ -425,6 +425,36 @@ fn test_skill_collapses_newlines() {
     assert!(content.contains("description: Line 1 Line 2"));
 }
 
+#[test]
+fn test_skill_quotes_default_description() {
+    // Default description contains "Commands: " (colon-space); must be quoted.
+    let content = generate_skill(&sample_tree(), None).unwrap();
+    let lines: Vec<&str> = content.lines().collect();
+    assert!(lines[2].starts_with("description: \""));
+    assert!(lines[2].ends_with("\""));
+}
+
+#[test]
+fn test_skill_escapes_user_values_with_yaml_specials() {
+    let opts = SkillOptions {
+        description: Some("Usage: foo; see \"bar\" --- for details".into()),
+        when_to_use: Some("has # and : both".into()),
+    };
+    let content = generate_skill_with(&sample_tree(), None, &opts).unwrap();
+    assert!(content.contains("description: \"Usage: foo; see \\\"bar\\\" --- for details\""));
+    assert!(content.contains("when_to_use: \"has # and : both\""));
+}
+
+#[test]
+fn test_skill_leaves_plain_values_unquoted() {
+    let opts = SkillOptions {
+        description: Some("Run Noether pipelines.".into()),
+        when_to_use: None,
+    };
+    let content = generate_skill_with(&sample_tree(), None, &opts).unwrap();
+    assert!(content.contains("description: Run Noether pipelines."));
+}
+
 // ── AcliApp ──────────────────────────────────────────────────────────────────
 
 #[test]

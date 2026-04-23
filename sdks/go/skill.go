@@ -45,10 +45,10 @@ func GenerateSkillWith(tree *CommandTree, path string, opts SkillOptions) (strin
 
 	var b strings.Builder
 	b.WriteString("---\n")
-	fmt.Fprintf(&b, "name: %s\n", name)
-	fmt.Fprintf(&b, "description: %s\n", description)
+	fmt.Fprintf(&b, "name: %s\n", yamlScalar(name))
+	fmt.Fprintf(&b, "description: %s\n", yamlScalar(description))
 	if w := collapseWS(opts.WhenToUse); w != "" {
-		fmt.Fprintf(&b, "when_to_use: %s\n", w)
+		fmt.Fprintf(&b, "when_to_use: %s\n", yamlScalar(w))
 	}
 	b.WriteString("---\n\n")
 
@@ -131,6 +131,31 @@ func GenerateSkillWith(tree *CommandTree, path string, opts SkillOptions) (strin
 
 func collapseWS(s string) string {
 	return strings.Join(strings.Fields(s), " ")
+}
+
+var yamlReservedStart = map[byte]bool{
+	'!': true, '&': true, '*': true, '?': true, '|': true, '>': true,
+	'\'': true, '"': true, '%': true, '@': true, '`': true, '#': true,
+	',': true, '[': true, ']': true, '{': true, '}': true, '-': true,
+}
+
+// yamlScalar renders a value safe for a single-line YAML block mapping value.
+func yamlScalar(value string) string {
+	if value == "" {
+		return `""`
+	}
+	first := value[0]
+	needsQuoting := strings.Contains(value, ": ") ||
+		strings.Contains(value, " #") ||
+		yamlReservedStart[first] ||
+		strings.HasSuffix(value, ":") ||
+		strings.TrimSpace(value) != value
+	if !needsQuoting {
+		return value
+	}
+	escaped := strings.ReplaceAll(value, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+	return `"` + escaped + `"`
 }
 
 func defaultSkillDescription(name string, userCommands []CommandInfo) string {

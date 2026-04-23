@@ -99,4 +99,35 @@ public class BasicTests
         var content = Skill.Generate(SampleSkillTree(), null, opts);
         Assert.Contains("description: Line 1 Line 2", content);
     }
+
+    [Fact]
+    public void Skill_quotes_default_description()
+    {
+        // Default description contains ": " (colon-space); must be quoted.
+        var content = Skill.Generate(SampleSkillTree(), null).ReplaceLineEndings("\n");
+        var lines = content.Split('\n');
+        Assert.StartsWith("description: \"", lines[2]);
+        Assert.EndsWith("\"", lines[2]);
+    }
+
+    [Fact]
+    public void Skill_escapes_user_yaml_specials()
+    {
+        var opts = new SkillOptions
+        {
+            Description = "Usage: foo; see \"bar\" --- for details",
+            WhenToUse = "has # and : both",
+        };
+        var content = Skill.Generate(SampleSkillTree(), null, opts);
+        Assert.Contains("description: \"Usage: foo; see \\\"bar\\\" --- for details\"", content);
+        Assert.Contains("when_to_use: \"has # and : both\"", content);
+    }
+
+    [Fact]
+    public void Skill_leaves_plain_values_unquoted()
+    {
+        var opts = new SkillOptions { Description = "Run Noether pipelines." };
+        var content = Skill.Generate(SampleSkillTree(), null, opts);
+        Assert.Contains("description: Run Noether pipelines.", content);
+    }
 }
