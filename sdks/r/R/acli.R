@@ -128,26 +128,69 @@ acli_cli_folder_needs_update <- function(tree, target_dir = getwd()) {
   identical(jsonlite::minify(cur), jsonlite::minify(jsonlite::toJSON(jsonlite::parse_json(old), auto_unbox = TRUE)))
 }
 
+#' Collapse whitespace in a single-line frontmatter value.
+#' @keywords internal
+acli__collapse_ws <- function(s) {
+  if (is.null(s)) return("")
+  gsub("\\s+", " ", trimws(s))
+}
+
+#' @keywords internal
+acli__default_skill_description <- function(name, user_commands) {
+  if (length(user_commands) == 0) {
+    return(sprintf("Invoke the `%s` CLI.", name))
+  }
+  n <- min(4L, length(user_commands))
+  shown <- vapply(user_commands[seq_len(n)], function(c) c$name, character(1))
+  suffix <- if (length(user_commands) > 4) "…" else ""
+  sprintf(
+    "Invoke the `%s` CLI. Commands: %s%s",
+    name, paste(shown, collapse = ", "), suffix
+  )
+}
+
+#' Generate a SKILL.md file (agentskills.io) from an ACLI command tree.
+#'
+#' @param tree The command tree.
+#' @param path Optional path to write the file to.
+#' @param description Optional frontmatter description.
+#' @param when_to_use Optional frontmatter when_to_use.
 #' @export
-acli_skill_generate <- function(tree, path = NULL) {
+acli_skill_generate <- function(tree, path = NULL, description = NULL, when_to_use = NULL) {
   builtin <- c("introspect", "version", "skill")
   name <- tree$name
   ver <- tree$version
+
+  user_commands <- Filter(function(c) !(c$name %in% builtin), tree$commands)
+
+  desc <- acli__collapse_ws(description)
+  if (!nzchar(desc)) {
+    desc <- acli__default_skill_description(name, user_commands)
+  }
+
   b <- character()
+  b <- c(b, "---\n")
+  b <- c(b, sprintf("name: %s\n", name))
+  b <- c(b, sprintf("description: %s\n", desc))
+  wtu <- acli__collapse_ws(when_to_use)
+  if (nzchar(wtu)) {
+    b <- c(b, sprintf("when_to_use: %s\n", wtu))
+  }
+  b <- c(b, "---\n\n")
+
   b <- c(b, sprintf("# %s\n", name))
+  b <- c(b, "\n")
   b <- c(b, sprintf("> Auto-generated skill file for `%s` v%s\n", name, ver))
   b <- c(b, sprintf("> Re-generate with: `%s skill` or `acli skill --bin %s`\n\n", name, name))
   b <- c(b, "## Available commands\n\n")
-  for (cmd in tree$commands) {
-    if (cmd$name %in% builtin) next
+  for (cmd in user_commands) {
     tag <- ""
     if (isTRUE(cmd$idempotent)) tag <- " (idempotent)"
     if (identical(cmd$idempotent, "conditional")) tag <- " (conditionally idempotent)"
     b <- c(b, sprintf("- `%s %s` -- %s%s\n", name, cmd$name, cmd$description, tag))
   }
   b <- c(b, "\n")
-  for (cmd in tree$commands) {
-    if (cmd$name %in% builtin) next
+  for (cmd in user_commands) {
     b <- c(b, sprintf("## `%s %s`\n\n", name, cmd$name))
     if (nzchar(cmd$description %||% "")) b <- c(b, cmd$description, "\n\n")
     if (length(cmd$options)) {
@@ -187,9 +230,13 @@ acli_suggest_flag <- function(unknown, known) {
 }
 
 #' @export
-acli_new_app <- function(name, version, cli_dir = getwd()) {
+acli_new_app <- function(name, version, cli_dir = getwd(),
+                         skill_description = NULL, skill_when_to_use = NULL) {
   tree <- list(name = name, version = version, acli_version = "0.1.0", commands = list())
-  list(name = name, version = version, cli_dir = cli_dir, tree = tree)
+  list(
+    name = name, version = version, cli_dir = cli_dir, tree = tree,
+    skill_description = skill_description, skill_when_to_use = skill_when_to_use
+  )
 }
 
 #' @export
@@ -224,7 +271,11 @@ acli_handle_version <- function(app, format = "text") {
 
 #' @export
 acli_handle_skill <- function(app, out_path = NULL, format = "text") {
-  content <- acli_skill_generate(app$tree, NULL)
+  content <- acli_skill_generate(
+    app$tree, NULL,
+    description = app$skill_description,
+    when_to_use = app$skill_when_to_use
+  )
   if (identical(format, "json")) {
     env <- acli_success_envelope("skill", list(path = out_path, content = content), app$version, NULL)
     acli_emit(env, "json")
