@@ -134,13 +134,7 @@ fn test_success_envelope_cache_meta() {
         key: Some("sha256:abc".into()),
         age_seconds: Some(3600),
     };
-    let env = success_envelope(
-        "run",
-        json!({"x": 1}),
-        "1.0.0",
-        None,
-        Some(cache.clone()),
-    );
+    let env = success_envelope("run", json!({"x": 1}), "1.0.0", None, Some(cache.clone()));
     assert_eq!(env.meta.cache, Some(cache));
 }
 

@@ -39,9 +39,7 @@ class InvalidArgsError(ACLIError):
         hints: list[str] | None = None,
         docs: str | None = None,
     ) -> None:
-        super().__init__(
-            message, code=ExitCode.INVALID_ARGS, hint=hint, hints=hints, docs=docs
-        )
+        super().__init__(message, code=ExitCode.INVALID_ARGS, hint=hint, hints=hints, docs=docs)
 
 
 class NotFoundError(ACLIError):
@@ -104,9 +102,7 @@ class UpstreamError(ACLIError):
         hints: list[str] | None = None,
         docs: str | None = None,
     ) -> None:
-        super().__init__(
-            message, code=ExitCode.UPSTREAM_ERROR, hint=hint, hints=hints, docs=docs
-        )
+        super().__init__(message, code=ExitCode.UPSTREAM_ERROR, hint=hint, hints=hints, docs=docs)
 
 
 class TimeoutError(ACLIError):  # noqa: A001 — intentionally shadows builtin
@@ -124,9 +120,7 @@ class TimeoutError(ACLIError):  # noqa: A001 — intentionally shadows builtin
         hints: list[str] | None = None,
         docs: str | None = None,
     ) -> None:
-        super().__init__(
-            message, code=ExitCode.TIMEOUT, hint=hint, hints=hints, docs=docs
-        )
+        super().__init__(message, code=ExitCode.TIMEOUT, hint=hint, hints=hints, docs=docs)
 
 
 class PermissionDeniedError(ACLIError):
