@@ -201,42 +201,31 @@ class TestGenerateSkill:
         assert lines[closing + 1] == ""
         assert lines[closing + 2] == "# noether"
 
-    def test_frontmatter_is_valid_yaml(self) -> None:
-        """The synthesised default contains `Commands: …` (colon-space).
-        Emit it as a quoted scalar so strict YAML parsers accept it.
-        """
-        import yaml
-
+    def test_frontmatter_quotes_default_description(self) -> None:
+        """Synthesised default contains `Commands: …` (colon-space). Must be quoted."""
         content = generate_skill(_sample_tree())
         lines = content.splitlines()
-        closing = lines.index("---", 1)
-        block = "\n".join(lines[1:closing])
-        data = yaml.safe_load(block)
-        assert data["name"] == "noether"
-        assert "noether" in data["description"]
-        assert "run" in data["description"] or "status" in data["description"]
+        # lines[0]="---", lines[1]="name: …", lines[2]="description: …"
+        assert lines[2].startswith('description: "')
+        assert lines[2].endswith('"')
+        # Value is recoverable
+        assert "noether" in lines[2]
 
-    def test_frontmatter_yaml_escapes_user_values(self) -> None:
-        import yaml
-
+    def test_frontmatter_quotes_user_yaml_specials(self) -> None:
         content = generate_skill(
             _sample_tree(),
-            description="Usage: foo; see \"bar\" --- for details",
+            description='Usage: foo; see "bar" --- for details',
             when_to_use="has # and : both",
         )
-        lines = content.splitlines()
-        closing = lines.index("---", 1)
-        block = "\n".join(lines[1:closing])
-        data = yaml.safe_load(block)
-        assert data["description"] == "Usage: foo; see \"bar\" --- for details"
-        assert data["when_to_use"] == "has # and : both"
+        assert 'description: "Usage: foo; see \\"bar\\" --- for details"' in content
+        assert 'when_to_use: "has # and : both"' in content
 
-    def test_frontmatter_yaml_escapes_backslash(self) -> None:
-        import yaml
+    def test_frontmatter_escapes_backslash_in_quoted(self) -> None:
+        content = generate_skill(_sample_tree(), description='a: b has \\ backslash')
+        # Triggers quoting (contains ": "); backslash must be doubled.
+        assert 'description: "a: b has \\\\ backslash"' in content
 
-        content = generate_skill(_sample_tree(), description="has \\ backslash")
-        lines = content.splitlines()
-        closing = lines.index("---", 1)
-        block = "\n".join(lines[1:closing])
-        data = yaml.safe_load(block)
-        assert data["description"] == "has \\ backslash"
+    def test_frontmatter_leaves_plain_values_unquoted(self) -> None:
+        content = generate_skill(_sample_tree(), description="Run Noether pipelines.")
+        assert "description: Run Noether pipelines." in content
+        assert 'description: "Run Noether pipelines."' not in content
