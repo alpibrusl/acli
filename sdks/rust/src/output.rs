@@ -138,6 +138,12 @@ pub fn dry_run_envelope(
 }
 
 /// Build an error envelope using a typed ExitCode.
+///
+/// The argument count reflects the required shape of the ACLI error envelope
+/// (spec §2.2: `command`, `code`, `message`, `hint`, `hints`, `docs`, `version`,
+/// plus timing). Grouping these into a struct would hide the spec alignment;
+/// the lint is silenced deliberately.
+#[allow(clippy::too_many_arguments)]
 pub fn error_envelope(
     command: &str,
     code: ExitCode,
@@ -148,10 +154,23 @@ pub fn error_envelope(
     version: &str,
     start: Option<Instant>,
 ) -> Envelope {
-    error_envelope_raw(command, code.name(), message, hint, hints, docs, version, start)
+    error_envelope_raw(
+        command,
+        code.name(),
+        message,
+        hint,
+        hints,
+        docs,
+        version,
+        start,
+    )
 }
 
 /// Build an error envelope from a raw code string.
+///
+/// See `error_envelope` — the argument shape mirrors the spec's error envelope
+/// fields, so the `too_many_arguments` lint is allowed here.
+#[allow(clippy::too_many_arguments)]
 pub fn error_envelope_raw(
     command: &str,
     code: &str,

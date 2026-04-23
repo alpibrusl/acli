@@ -221,7 +221,7 @@ class TestGenerateSkill:
         assert 'when_to_use: "has # and : both"' in content
 
     def test_frontmatter_escapes_backslash_in_quoted(self) -> None:
-        content = generate_skill(_sample_tree(), description='a: b has \\ backslash')
+        content = generate_skill(_sample_tree(), description="a: b has \\ backslash")
         # Triggers quoting (contains ": "); backslash must be doubled.
         assert 'description: "a: b has \\\\ backslash"' in content
 

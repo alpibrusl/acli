@@ -47,7 +47,11 @@ fn default_description(name: &str, user_commands: &[&crate::introspect::CommandI
     if user_commands.is_empty() {
         return format!("Invoke the `{name}` CLI.");
     }
-    let shown: Vec<&str> = user_commands.iter().take(4).map(|c| c.name.as_str()).collect();
+    let shown: Vec<&str> = user_commands
+        .iter()
+        .take(4)
+        .map(|c| c.name.as_str())
+        .collect();
     let suffix = if user_commands.len() > 4 { "…" } else { "" };
     format!(
         "Invoke the `{name}` CLI. Commands: {}{suffix}",

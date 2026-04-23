@@ -9,7 +9,7 @@ from acli.errors import (
     NotFoundError,
     PermissionDeniedError,
     PreconditionError,
-    TimeoutError,
+    TimeoutError,  # noqa: A004 — spec §3 TIMEOUT exit code; shadowing is intentional
     UpstreamError,
     suggest_flag,
 )
@@ -31,12 +31,12 @@ __all__ = [
     "CacheMeta",
     "CommandExample",
     "CommandMeta",
-    "ParamVersionMeta",
     "ConflictError",
     "ExitCode",
     "InvalidArgsError",
     "NotFoundError",
     "OutputFormat",
+    "ParamVersionMeta",
     "PermissionDeniedError",
     "PreconditionError",
     "TimeoutError",
