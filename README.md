@@ -2,17 +2,17 @@
 
 **Build CLI tools that AI agents can discover, learn, and use autonomously.**
 
-ACLI is a specification and SDK for designing CLI tools that agents can bootstrap at runtime — without MCP servers, external schemas, or hand-written SKILLS.md files.
+ACLI is a specification and SDK for designing CLI tools that agents can bootstrap at runtime — without MCP servers, external schemas, or hand-written `SKILL.md` files.
 
 ```
 MCP           → schema defined externally, injected at agent startup
-SKILLS.md     → instructions written by humans, loaded into context
+SKILL.md      → authored instructions (agentskills.io open standard)
 <cli> --help  → tool teaches itself to the agent on demand    ← ACLI
 ```
 
 ## Why ACLI?
 
-| Property | MCP | SKILLS.md | ACLI |
+| Property | MCP | SKILL.md | ACLI |
 |----------|-----|-----------|------|
 | Who maintains the schema? | Humans (external) | Humans (external) | The tool itself |
 | Discovery | All at once (startup) | All at once (startup) | Incremental (on demand) |
@@ -58,7 +58,7 @@ Note: `--output` is **auto-injected** — no need to declare it. `--dry-run` is 
 You automatically get:
 
 - `weather introspect` — full command tree as JSON
-- `weather skill` — auto-generated SKILLS.md for agent bootstrapping
+- `weather skill` — auto-generated `SKILL.md` ([agentskills.io](https://agentskills.io)) for agent bootstrapping
 - `weather version` — semver output with `--output json`
 - `.cli/` folder with README, examples, and schemas
 - JSON error envelopes with actionable hints and semantic exit codes (0–9)
@@ -71,7 +71,7 @@ See the full [weather example](https://alpibrusl.github.io/acli/example/) for a 
 ```bash
 acli validate --bin weather         # Validate against the spec
 acli validate --bin weather --deep  # Deep validation (runs tool, checks envelopes)
-acli skill --bin weather            # Generate SKILLS.md from the tool
+acli skill --bin weather            # Generate SKILL.md from the tool
 acli init --name myapp              # Scaffold a new ACLI project
 ```
 
@@ -84,7 +84,7 @@ The full spec is in [`ACLI_SPEC.md`](ACLI_SPEC.md). Key concepts:
 - **Semantic exit codes** — 0 success, 2 invalid args, 3 not found, 5 conflict, 9 dry-run
 - **Dry-run** — `--dry-run` on all state-modifying commands
 - **Idempotency** — each command declares `true|false|conditional`
-- **Skill files** — auto-generated SKILLS.md bridging cold-start gap
+- **Skill files** — auto-generated `SKILL.md` ([agentskills.io](https://agentskills.io)) bridging cold-start gap
 
 ### Stability policy
 

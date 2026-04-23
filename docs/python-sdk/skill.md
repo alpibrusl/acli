@@ -1,15 +1,17 @@
 # Skill File Generation
 
-ACLI bridges the gap between Stage 2 (SKILLS.md) and Stage 3 (CLI self-discovery) by letting tools auto-generate their own skill files.
+> The generated `SKILL.md` conforms to the [agentskills.io](https://agentskills.io) open standard and drops into `.claude/skills/<tool>/SKILL.md`, `.cursor/skills/<tool>/SKILL.md`, Gemini CLI, Codex, and other agentskills-compatible tools without modification.
+
+ACLI bridges the gap between authored skill files and Stage 3 (CLI self-discovery) by letting tools auto-generate their own `SKILL.md` on demand.
 
 ## Why skill files?
 
 The first time an agent encounters an ACLI tool, it faces a cold-start problem: it needs to run `--help` or `introspect` before it can act. A skill file provides immediate context — and because it's generated from the tool itself, it's always accurate.
 
 ```
-Agent reads SKILLS.md  →  knows commands, options, examples immediately
-Agent runs --help       →  gets deeper details on demand
-Agent runs introspect   →  gets machine-readable command tree
+Agent reads SKILL.md   →  knows commands, options, examples immediately
+Agent runs --help      →  gets deeper details on demand
+Agent runs introspect  →  gets machine-readable command tree
 ```
 
 The skill file is the fast path; `--help` and `introspect` are the deep path.
@@ -21,16 +23,16 @@ The skill file is the fast path; `--help` and `introspect` are the deep path.
 Every `ACLIApp` gets a `skill` command automatically:
 
 ```bash
-myapp skill                          # Print to stdout
-myapp skill --out SKILLS.md          # Write to file
-myapp skill --output json            # JSON envelope with content
+myapp skill                         # Print to stdout
+myapp skill --out SKILL.md          # Write to file
+myapp skill --output json           # JSON envelope with content
 ```
 
 ### Using the acli CLI
 
 ```bash
-acli skill --bin myapp               # Generate from any installed ACLI tool
-acli skill --bin myapp --out SKILLS.md
+acli skill --bin myapp              # Generate from any installed ACLI tool
+acli skill --bin myapp --out SKILL.md
 ```
 
 ### Programmatically
@@ -39,12 +41,19 @@ acli skill --bin myapp --out SKILLS.md
 from acli import generate_skill
 
 tree = app.get_command_tree()
-content = generate_skill(tree, target_path=Path("SKILLS.md"))
+content = generate_skill(
+    tree,
+    target_path=Path("SKILL.md"),
+    description="Run myapp commands.",
+    when_to_use="Use when working with myapp artifacts.",
+)
 ```
+
+Pass `skill_description` / `skill_when_to_use` to `ACLIApp(...)` to set the frontmatter values used by the built-in `skill` subcommand.
 
 ## What's included
 
-The generated skill file contains:
+The generated file begins with a YAML frontmatter block (`name`, `description`, optional `when_to_use`) and then contains:
 
 1. **Command overview** — all user-facing commands with descriptions and idempotency tags
 2. **Detailed usage** — options, arguments, types, defaults for each command
@@ -73,7 +82,7 @@ The `acli` command is the meta-CLI for working with ACLI tools:
 |---------|-------------|
 | `acli validate --bin <tool>` | Validate a tool against the ACLI spec checklist |
 | `acli validate --bin <tool> --deep` | Deep validation: runs the tool and checks JSON envelopes |
-| `acli skill --bin <tool>` | Generate a skill file for a tool |
+| `acli skill --bin <tool>` | Generate a `SKILL.md` for a tool |
 | `acli init --name <name>` | Scaffold a new ACLI-compliant Python project |
 
 The `acli` CLI is itself ACLI-compliant — you can run `acli validate --bin acli` to verify.

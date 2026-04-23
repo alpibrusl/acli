@@ -15,7 +15,7 @@ Agent tool integration has evolved through three stages:
 
 ```
 MCP           → schema defined externally, injected at agent startup
-SKILLS.md     → instructions written by humans, loaded into context
+SKILL.md      → authored instructions (agentskills.io open standard)
 <cli> --help  → tool teaches itself to the agent on demand
 ```
 

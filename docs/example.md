@@ -195,13 +195,18 @@ The `--deep` flag actually runs the tool and verifies that JSON envelopes are co
 
 ## Generated skill file
 
-Running `weather skill` auto-generates a SKILLS.md that gives agents immediate context:
+Running `weather skill` auto-generates a `SKILL.md` (conforming to the [agentskills.io](https://agentskills.io) open standard) that gives agents immediate context:
 
 ```
 $ weather skill
 ```
 
 ```markdown
+---
+name: weather
+description: Invoke the `weather` CLI. Commands: get, forecast, alerts, favorite
+---
+
 # weather
 
 > Auto-generated skill file for `weather` v1.0.0
@@ -263,7 +268,7 @@ $ acli validate --bin weather
 Here's the complete agent interaction pattern:
 
 ```
-1. Agent reads SKILLS.md           → immediate context (commands, options, examples)
+1. Agent reads SKILL.md            → immediate context (commands, options, examples)
 2. Agent runs: weather get ...     → structured JSON response, predictable exit codes
 3. On error: agent reads hint      → knows exactly what to fix
 4. On unknown command: --help      → deeper discovery on demand

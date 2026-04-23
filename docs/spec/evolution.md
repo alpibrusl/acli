@@ -1,6 +1,6 @@
 ---
 title: "Why ACLI? Evolution from MCP to Skills to CLI"
-description: How agent tool integration evolved through MCP, SKILLS.md, and ACLI — comparison of schema ownership, discovery, output format, and infrastructure requirements.
+description: How agent tool integration evolved through MCP, SKILL.md (agentskills.io), and ACLI — comparison of schema ownership, discovery, output format, and infrastructure requirements.
 ---
 
 # Evolution of Agent Tool Integration
@@ -27,9 +27,9 @@ The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) defines too
 - Context cost: all tool schemas consume tokens whether or not the agent uses them
 - Requires infrastructure (MCP server, registry) beyond the tool itself
 
-## Stage 2: SKILLS.md — Human-written instructions
+## Stage 2: SKILL.md — Authored instructions (agentskills.io)
 
-Skills files (e.g., `SKILLS.md`, `.cursorrules`, `CLAUDE.md`) are human-authored documents loaded into the agent's context. They describe available tools, common workflows, and usage patterns in natural language.
+Skill files (e.g., `SKILL.md` per the [agentskills.io](https://agentskills.io) open standard, plus project-level siblings like `.cursorrules` or `CLAUDE.md`) are authored documents loaded into the agent's context. They describe available tools, common workflows, and usage patterns in natural language, with a YAML frontmatter block (`name`, `description`, optional `when_to_use`) telling the agent when to reach for them.
 
 **How it works:** A markdown file in the project root tells the agent what tools exist, how to invoke them, and what to watch out for. The agent reads this on first interaction.
 
@@ -62,7 +62,7 @@ ACLI takes a different approach: **the tool is its own documentation**. An agent
 
 **What makes this different:**
 
-| Property | MCP | SKILLS.md | ACLI |
+| Property | MCP | SKILL.md | ACLI |
 |----------|-----|-----------|------|
 | Who maintains the schema? | Humans (external) | Humans (external) | The tool itself |
 | Discovery | All at once (startup) | All at once (startup) | Incremental (on demand) |
@@ -91,10 +91,10 @@ ACLI takes a different approach: **the tool is its own documentation**. An agent
 These stages are not mutually exclusive. A well-designed tool ecosystem might use:
 
 - **MCP** for hosted API services where schemas are stable and centrally managed
-- **SKILLS.md** for workflow guidance, project conventions, and judgment calls
+- **SKILL.md** (agentskills.io) for workflow guidance, project conventions, and judgment calls
 - **ACLI** for CLI tools that need to be self-describing and independently discoverable
 
-ACLI targets the gap where MCP is too heavy and SKILLS.md is too fragile: **standalone CLI tools that agents need to use reliably without prior configuration**.
+ACLI targets the gap where MCP is too heavy and a hand-authored SKILL.md is too fragile: **standalone CLI tools that agents need to use reliably without prior configuration**. ACLI tools also emit a `SKILL.md` from their own source of truth (see the `skill` subcommand), so an agentskills.io-compatible bootstrap is available for free.
 
 ## See also
 
