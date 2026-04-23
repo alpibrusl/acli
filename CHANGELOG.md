@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-23
+
 ### Changed (breaking)
 
 - **All SDKs**: the `skill` subcommand now emits `SKILL.md` (singular) with
@@ -107,7 +109,8 @@ new file directly.
 - CI pipeline with Python 3.10–3.13 matrix
 - Release pipeline with PyPI Trusted Publishing
 
-[Unreleased]: https://github.com/alpibrusl/acli/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/alpibrusl/acli/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/alpibrusl/acli/compare/v0.4.1...v0.5.0
 [0.4.0]: https://github.com/alpibrusl/acli/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/alpibrusl/acli/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/alpibrusl/acli/compare/v0.1.4...v0.2.0
