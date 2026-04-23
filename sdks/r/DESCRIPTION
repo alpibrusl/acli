@@ -1,6 +1,6 @@
 Package: acli.spec
 Title: Agent-Friendly Command Line Interface (ACLI) Specification
-Version: 0.3.0
+Version: 0.5.0
 Author: ACLI Contributors
 Maintainer: ACLI Contributors <acli-spec@noreply.invalid>
 Description: Reference implementation of the ACLI v0.1.0 specification: JSON
