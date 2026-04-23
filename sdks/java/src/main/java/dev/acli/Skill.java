@@ -8,23 +8,63 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/** Generate SKILLS.md files from ACLI command trees. */
+/**
+ * Generate SKILL.md files from ACLI command trees.
+ *
+ * <p>Emits a file conforming to the agentskills.io open standard
+ * (<a href="https://agentskills.io">agentskills.io</a>): YAML frontmatter
+ * ({@code name}, {@code description}, optional {@code when_to_use}) followed
+ * by the ACLI command reference body.
+ */
 public final class Skill {
 
     private static final Set<String> BUILTIN =
             Set.of("introspect", "version", "skill");
 
+    /** Options forwarded into the SKILL.md frontmatter. */
+    public record Options(String description, String whenToUse) {
+        public static Options empty() {
+            return new Options(null, null);
+        }
+    }
+
     private Skill() {}
 
     public static String generateSkill(CommandTree tree) throws IOException {
-        return generateSkill(tree, null);
+        return generateSkill(tree, null, Options.empty());
     }
 
-    /** Generate SKILLS.md content; optionally write to {@code targetPath}. */
     public static String generateSkill(CommandTree tree, Path targetPath) throws IOException {
+        return generateSkill(tree, targetPath, Options.empty());
+    }
+
+    /** Generate SKILL.md content with caller-supplied frontmatter options. */
+    public static String generateSkill(CommandTree tree, Path targetPath, Options opts)
+            throws IOException {
         String name = tree.getName();
         String version = tree.getVersion();
         List<String> lines = new ArrayList<>();
+
+        List<CommandInfo> userCommands = new ArrayList<>();
+        for (CommandInfo c : tree.getCommands()) {
+            if (!BUILTIN.contains(c.getName())) {
+                userCommands.add(c);
+            }
+        }
+
+        String description =
+                opts.description() != null && !opts.description().isEmpty()
+                        ? collapseWs(opts.description())
+                        : defaultDescription(name, userCommands);
+
+        lines.add("---");
+        lines.add("name: " + name);
+        lines.add("description: " + description);
+        if (opts.whenToUse() != null && !opts.whenToUse().isEmpty()) {
+            lines.add("when_to_use: " + collapseWs(opts.whenToUse()));
+        }
+        lines.add("---");
+        lines.add("");
 
         lines.add("# " + name);
         lines.add("");
@@ -33,13 +73,6 @@ public final class Skill {
         lines.add("");
         lines.add("## Available commands");
         lines.add("");
-
-        List<CommandInfo> userCommands = new ArrayList<>();
-        for (CommandInfo c : tree.getCommands()) {
-            if (!BUILTIN.contains(c.getName())) {
-                userCommands.add(c);
-            }
-        }
 
         for (CommandInfo cmd : userCommands) {
             String tag = idemTag(cmd);
@@ -156,6 +189,28 @@ public final class Skill {
         }
 
         return content;
+    }
+
+    private static String collapseWs(String s) {
+        return s.trim().replaceAll("\\s+", " ");
+    }
+
+    private static String defaultDescription(String name, List<CommandInfo> userCommands) {
+        if (userCommands.isEmpty()) {
+            return "Invoke the `" + name + "` CLI.";
+        }
+        int shown = Math.min(4, userCommands.size());
+        StringBuilder sb = new StringBuilder("Invoke the `").append(name).append("` CLI. Commands: ");
+        for (int i = 0; i < shown; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(userCommands.get(i).getName());
+        }
+        if (userCommands.size() > 4) {
+            sb.append("…");
+        }
+        return sb.toString();
     }
 
     private static String idemTag(CommandInfo cmd) {
