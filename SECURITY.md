@@ -3,7 +3,7 @@
 ## Reporting a Vulnerability
 
 Private disclosure via GitHub Security Advisories on
-<https://github.com/alpibrusl/acli> or email to `security@alpibru.com`.
+<https://github.com/alpibrusl/acli> or email to `security@lexlang.org`.
 Do not open a public issue.
 
 Include: description, steps to reproduce, affected SDK + version, and a
