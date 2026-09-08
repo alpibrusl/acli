@@ -208,7 +208,9 @@ def _render_command(lines: list[str], tool_name: str, cmd: dict[str, Any]) -> No
         lines.append("### Options")
         lines.append("")
         for opt in options:
-            opt_name = opt["name"].replace("_", "-")
+            # The name is bare — the renderer is what makes it a flag.
+            # Strip a stray leading "--" so it is not doubled.
+            opt_name = opt["name"].lstrip("-").replace("_", "-")
             opt_type = opt.get("type", "")
             opt_desc = opt.get("description", "")
             default = opt.get("default")

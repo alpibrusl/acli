@@ -103,6 +103,26 @@ class TestGenerateSkill:
         assert "--env" in content
         assert "[default: dev]" in content
 
+    def test_one_flag_prefix_however_the_name_is_spelled(self) -> None:
+        """Names are bare; the renderer makes them flags.
+
+        A caller who writes ``"--pipeline"`` anyway used to get
+        ``----pipeline`` in the published SKILL.md, with nothing saying
+        so — the file is written for agents to read, not its author.
+        """
+        tree = _sample_tree()
+        tree["commands"][0]["options"] = [
+            {"name": "file", "type": "path", "description": "bare"},
+            {"name": "--dry-run", "type": "bool", "description": "prefixed"},
+            {"name": "max_retries", "type": "int", "description": "underscored"},
+        ]
+        content = generate_skill(tree)
+        assert "- `--file` (path)" in content
+        assert "- `--dry-run` (bool)" in content
+        assert "- `--max-retries` (int)" in content
+        doubled = [ln for ln in content.splitlines() if ln.lstrip().startswith("- `---")]
+        assert not doubled, doubled
+
     def test_arguments_rendered(self) -> None:
         content = generate_skill(_sample_tree())
         assert "`target`" in content

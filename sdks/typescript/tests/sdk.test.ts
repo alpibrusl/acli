@@ -239,6 +239,26 @@ describe('Skill', () => {
     expect(content).toContain('## Exit codes');
   });
 
+  it('renders one flag prefix however the name is spelled', () => {
+    // Names are bare and the renderer is what makes them flags; a
+    // caller who writes '--dry-run' anyway used to get '----dry-run'
+    // in the published SKILL.md, which only an agent ever reads.
+    const tree = sampleTree();
+    tree.commands[0].options = [
+      { name: 'file', type: 'path', description: 'bare' },
+      { name: '--dry-run', type: 'bool', description: 'prefixed' },
+      { name: 'max_retries', type: 'int', description: 'underscored' },
+    ];
+    const content = generateSkill(tree);
+    expect(content).toContain('- `--file` (path)');
+    expect(content).toContain('- `--dry-run` (bool)');
+    expect(content).toContain('- `--max-retries` (int)');
+    const doubled = content
+      .split('\n')
+      .filter((l) => l.trimStart().startsWith('- `---'));
+    expect(doubled).toEqual([]);
+  });
+
   it('writes to file', () => {
     const target = path.join(tmpDir, 'SKILL.md');
     const content = generateSkill(sampleTree(), target);
