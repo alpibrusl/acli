@@ -352,6 +352,37 @@ fn test_generate_skill() {
     assert!(content.contains("## Further discovery"));
 }
 
+/// Option names are bare (`add_option("file", ...)`) and the renderer is
+/// what makes them flags. A caller who spells the name `"--file"` anyway
+/// gets the same rendering rather than `----file` — an easy mistake with
+/// no feedback, since the doubled prefix only shows up in the published
+/// skill file. `_` normalizes to `-` for the same reason.
+#[test]
+fn skill_renders_one_flag_prefix_however_the_name_is_spelled() {
+    let mut tree = CommandTree::new("noether", "1.0.0");
+    tree.add_command(
+        CommandInfo::new("run", "Run a pipeline")
+            .add_option("file", "path", "bare name", None)
+            .add_option("--dry-run", "bool", "already prefixed", None)
+            .add_option("max_retries", "int", "underscored", None),
+    );
+    let content = generate_skill(&tree, None).unwrap();
+
+    assert!(content.contains("- `--file` (path)"), "{content}");
+    assert!(content.contains("- `--dry-run` (bool)"), "{content}");
+    assert!(content.contains("- `--max-retries` (int)"), "{content}");
+    // Scoped to option lines: the document itself legitimately contains
+    // runs of dashes (frontmatter fences, horizontal rules).
+    let doubled: Vec<&str> = content
+        .lines()
+        .filter(|l| l.trim_start().starts_with("- `---"))
+        .collect();
+    assert!(
+        doubled.is_empty(),
+        "no option should render a doubled prefix: {doubled:?}"
+    );
+}
+
 #[test]
 fn test_skill_write_to_file() {
     let dir = TempDir::new().unwrap();

@@ -142,7 +142,15 @@ pub fn generate_skill_with(
                     .as_ref()
                     .map(|d| format!(" [default: {d}]"))
                     .unwrap_or_default();
-                let opt_name = opt.name.replace('_', "-");
+                // The option name is bare — `add_option("file", ...)`, as
+                // the SDK's own tests use it — and this is what renders it
+                // as a flag. Callers who spell it `"--file"` anyway used to
+                // get `----file` in their published skill file with nothing
+                // saying so, which is a poor trade for a leading `--` that
+                // was never load-bearing. Strip it and render the one
+                // spelling either way, alongside the `_` normalization that
+                // was already here for the same reason.
+                let opt_name = opt.name.trim_start_matches('-').replace('_', "-");
                 lines.push(format!(
                     "- `--{opt_name}` ({}) — {}{default_str}",
                     opt.param_type, opt.description
