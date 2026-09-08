@@ -120,7 +120,9 @@ public final class Skill {
                             opt.defaultValue() != null
                                     ? " [default: " + opt.defaultValue() + "]"
                                     : "";
-                    String optName = opt.name().replace('_', '-');
+                    // The name is bare — the renderer is what makes it a
+                    // flag. Strip a stray leading "--" so it is not doubled.
+                    String optName = opt.name().replaceAll("^-+", "").replace('_', '-');
                     lines.add(
                             "- `--"
                                     + optName

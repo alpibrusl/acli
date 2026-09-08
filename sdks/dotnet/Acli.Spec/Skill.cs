@@ -97,7 +97,9 @@ public static class Skill
                 foreach (var o in cmd.Options)
                 {
                     var def = o.Default != null ? $" [default: {o.Default}]" : "";
-                    var on = o.Name.Replace("_", "-");
+                    // The name is bare — the renderer is what makes it a
+                    // flag. Strip a stray leading "--" so it is not doubled.
+                    var on = o.Name.TrimStart('-').Replace("_", "-");
                     b.AppendLine($"- `--{on}` ({o.Type}) — {o.Description}{def}");
                 }
                 b.AppendLine();

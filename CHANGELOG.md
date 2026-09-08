@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Rust SDK**: an option declared with a leading `--` rendered with a
+- **All SDKs**: an option declared with a leading `--` rendered with a
   doubled prefix in the generated skill file — `add_option("--file", …)`
   produced `` `----file` ``. Option names are bare (the SDK's own tests
   use `add_option("file", …)`) and the skill renderer is what makes them
@@ -17,7 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   invisible until you read the published `SKILL.md`, which is written
   for agents rather than for the author. The renderer now strips a
   leading `--` before adding its own, next to the `_` → `-`
-  normalization that was already there for the same reason.
+  normalization that was already there for the same reason. Fixed in
+  all six SDKs that render skill files (Rust, Python, TypeScript, Go,
+  Java, .NET) — the bug was identical in each, and an SDK that renders
+  differently from its siblings is its own problem.
 
 
 ## [0.5.0] - 2026-04-23

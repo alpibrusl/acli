@@ -89,7 +89,9 @@ export function generateSkill(
     if (cmd.options.length > 0) {
       lines.push('### Options', '');
       for (const opt of cmd.options) {
-        const optName = opt.name.replace(/_/g, '-');
+        // The name is bare — the renderer is what makes it a flag.
+        // Strip a stray leading `--` so it is not doubled.
+        const optName = opt.name.replace(/^-+/, '').replace(/_/g, '-');
         const def = opt.default !== undefined ? ` [default: ${opt.default}]` : '';
         lines.push(`- \`--${optName}\` (${opt.type}) — ${opt.description}${def}`);
       }

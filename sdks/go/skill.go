@@ -73,7 +73,9 @@ func GenerateSkillWith(tree *CommandTree, path string, opts SkillOptions) (strin
 				if o.Default != nil {
 					def = fmt.Sprintf(" [default: %v]", o.Default)
 				}
-				on := strings.ReplaceAll(o.Name, "_", "-")
+				// The name is bare — the renderer is what makes it a flag.
+				// Strip a stray leading "--" so it is not doubled.
+				on := strings.ReplaceAll(strings.TrimLeft(o.Name, "-"), "_", "-")
 				fmt.Fprintf(&b, "- `--%s` (%s) — %s%s\n", on, o.Type, o.Description, def)
 			}
 			b.WriteString("\n")
